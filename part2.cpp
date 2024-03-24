@@ -3,45 +3,15 @@
 #include <cstdlib>
 #include <cmath>
 #include <queue>
-
+#include "Process.h"
 using namespace std;
 
 int n, n_CPU, seed, t_cs, t_slice;
 double lambda, upper_bound, alpha;
 
-class Process{
-    public:
-        char process_name;
-        int add_Que_time;
-        int burst_number;
-        int burst_remaining;
-        int* burst_time;
-        int* io_time;
-        Process(){
-            this->process_name = 'A';
-            this->add_Que_time = 0;
-            this->burst_number = 0;
-            this->burst_remaining = 0;
-            this->burst_time = new int[0];
-            this->io_time = new int[0];
-        }
-        Process(char process_name, int Arrival_time, int Burst_number, int Burst_remaining){
-            this->process_name = process_name;
-            this->add_Que_time = Arrival_time;
-            this->burst_number = Burst_number;
-            this->burst_remaining = Burst_remaining;
-            this->burst_time = new int[Burst_number];
-            this->io_time = new int[Burst_number];
-        }
-        void add_burst(int burst_time, int io_time){
-            this->burst_time[this->burst_number] = burst_time;
-            this->io_time[this->burst_number] = io_time;
-            this->burst_number++;
-        }
-};
 int compare(const void *a, const void *b){
-    const Process *p1 = (Process *)a;
-    const Process *p2 = (Process *)b;
+    const Process *p1 = (const Process *)a;
+    const Process *p2 = (const Process *)b;
     return p1->add_Que_time - p2->add_Que_time;
 }
 
@@ -161,4 +131,7 @@ int main(int argc, char** argv)
     }
     qsort(process, n, sizeof(Process), compare);
     FCFS(process, t_cs, n);
+
+    //free memory
+    delete[] process;
 }
