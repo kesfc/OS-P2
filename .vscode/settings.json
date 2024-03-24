@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "cmath": "cpp"
+        "*.dfy": "dafny",
+        "*.pl": "prolog",
+        "cmath": "cpp",
+        "ostream": "cpp"
     }
 }

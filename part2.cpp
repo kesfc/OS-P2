@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <queue>
+#include <vector>
 #include "Process.h"
 using namespace std;
 
@@ -46,14 +47,14 @@ int IO_burst_time(){
     return ceil(next_exp());
 }
 
-void process_progress(int is_IO_bound, int process_code, Process& process){
+Process process_progress(int is_IO_bound, int process_code){
     double arrival_time = next_arrival_time();
     int Burst_number = number_burst();
-
     char process_name = static_cast<char>(process_code);
     string bound = is_IO_bound ? "I/O" : "CPU";
     // Carete an Process 
-    process = Process(process_name, arrival_time, Burst_number, Burst_number);
+    cout << process_name << " " << arrival_time << " " << Burst_number << endl;
+    Process process(process_name, arrival_time, Burst_number, Burst_number);
     // Header info
    std:: cout << bound << "-bound process " << process_name << ": arrival time " << arrival_time <<
         "ms; " << Burst_number << " CPU burst" << (Burst_number != 1 ? "s" : "") << ":" << endl;
@@ -80,6 +81,7 @@ void process_progress(int is_IO_bound, int process_code, Process& process){
         final_cpu_burst_time *= 4;
     }
     cout << "--> CPU burst " << final_cpu_burst_time << "ms" << endl;
+    return process;
 }
 
 void FCFS(Process* process, int t_cs, int Process_num){
@@ -120,18 +122,18 @@ int main(int argc, char** argv)
     << n_CPU << " CPU-bound process" << (n_CPU > 1 ? "es" : "") << " >>>" << endl;
     
     int asciiValue = 65;
-    Process* process = new Process[n];
+    vector<Process> allProcesses(n);
     for (int i = 0; i < n; i++, asciiValue++){
+
         if(i < n-n_CPU){
-            process_progress(1, asciiValue, process[i]);
+            allProcesses[i] = (process_progress(1, asciiValue));
         }
         else{
-            process_progress(0, asciiValue, process[i]);
+            allProcesses[i] = (process_progress(0, asciiValue));
         }
     }
-    qsort(process, n, sizeof(Process), compare);
-    FCFS(process, t_cs, n);
+    // qsort(process, n, sizeof(Process), compare);
+    // FCFS(process, t_cs, n);
 
     //free memory
-    delete[] process;
 }
