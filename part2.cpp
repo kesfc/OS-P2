@@ -55,7 +55,7 @@ Process process_progress(int is_IO_bound, int process_code){
     // Carete an Process 
     cout << process_name << " " << arrival_time << " " << Burst_number << endl;
     //Process process(process_name, arrival_time, Burst_number, Burst_number);
-    Process process;
+    Process process = Process(process_name, arrival_time, Burst_number, Burst_number);
     // Header info
    std:: cout << bound << "-bound process " << process_name << ": arrival time " << arrival_time <<
         "ms; " << Burst_number << " CPU burst" << (Burst_number != 1 ? "s" : "") << ":" << endl;

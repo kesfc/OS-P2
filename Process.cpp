@@ -14,7 +14,7 @@ Process::Process(){
 Process::Process(char process_name, int Arrival_time, const int Burst_number, const int Burst_remaining){
     this->process_name = process_name;
     this->add_Que_time = Arrival_time;
-    this->burst_number = Burst_number;
+    this->burst_number = 0;
     this->burst_remaining = Burst_remaining;
     this->burst_time = new int[Burst_number];
     this->io_time = new int[Burst_number];
