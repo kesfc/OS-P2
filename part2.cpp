@@ -54,7 +54,8 @@ Process process_progress(int is_IO_bound, int process_code){
     string bound = is_IO_bound ? "I/O" : "CPU";
     // Carete an Process 
     cout << process_name << " " << arrival_time << " " << Burst_number << endl;
-    Process process(process_name, arrival_time, Burst_number, Burst_number);
+    //Process process(process_name, arrival_time, Burst_number, Burst_number);
+    Process process;
     // Header info
    std:: cout << bound << "-bound process " << process_name << ": arrival time " << arrival_time <<
         "ms; " << Burst_number << " CPU burst" << (Burst_number != 1 ? "s" : "") << ":" << endl;
@@ -122,15 +123,16 @@ int main(int argc, char** argv)
     << n_CPU << " CPU-bound process" << (n_CPU > 1 ? "es" : "") << " >>>" << endl;
     
     int asciiValue = 65;
-    vector<Process> allProcesses(n);
+    vector<Process> processes;
     for (int i = 0; i < n; i++, asciiValue++){
-
+        Process p;
         if(i < n-n_CPU){
-            allProcesses[i] = (process_progress(1, asciiValue));
+            p = process_progress(1, asciiValue);
         }
         else{
-            allProcesses[i] = (process_progress(0, asciiValue));
+            p = process_progress(0, asciiValue);
         }
+        processes.push_back(p);
     }
     // qsort(process, n, sizeof(Process), compare);
     // FCFS(process, t_cs, n);

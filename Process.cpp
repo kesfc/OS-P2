@@ -11,15 +11,11 @@ Process::Process(){
     this->io_time = new int[1];
 }
 
-Process::Process(char process_name, int Arrival_time, int Burst_number, int Burst_remaining){
-        std::cout << "burst_number = " << Burst_number << std::endl;
+Process::Process(char process_name, int Arrival_time, const int Burst_number, const int Burst_remaining){
     this->process_name = process_name;
-        std::cout << "burst_number = " << Burst_number << std::endl;
     this->add_Que_time = Arrival_time;
     this->burst_number = Burst_number;
-        std::cout << "burst_number = " << Burst_number << std::endl;
     this->burst_remaining = Burst_remaining;
-        std::cout << "burst_number = " << Burst_number << std::endl;
     this->burst_time = new int[Burst_number];
     this->io_time = new int[Burst_number];
 }
