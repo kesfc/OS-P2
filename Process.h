@@ -12,6 +12,7 @@ class Process{
         Process();
         Process(char process_name, int Arrival_time, const int Burst_number, const int Burst_remaining);
         void add_burst(int burst_time, int io_time);
+        void free_self();
 };
 
 #endif // PROGRESS_H

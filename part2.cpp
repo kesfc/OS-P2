@@ -117,17 +117,18 @@ int main(int argc, char** argv)
     int asciiValue = 65;
     vector<Process> processes;
     for (int i = 0; i < n; i++, asciiValue++){
-        Process p;
         if(i < n-n_CPU){
-            p = process_progress(1, asciiValue);
+            processes.push_back(process_progress(1, asciiValue));
         }
         else{
-            p = process_progress(0, asciiValue);
+            processes.push_back(process_progress(0, asciiValue));
         }
-        processes.push_back(p);
     }
     // qsort(process, n, sizeof(Process), compare);
     // FCFS(process, t_cs, n);
 
     //free memory
+    for(int i = 0; i < n; i++){
+        processes[i].free_self();
+    }
 }

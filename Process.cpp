@@ -25,3 +25,8 @@ void Process::add_burst(int burst_time, int io_time){
     this->io_time[this->burst_number] = io_time;
     this->burst_number++;
 }
+
+void Process::free_self(){
+    delete[] burst_time;
+    delete[] io_time;
+}
