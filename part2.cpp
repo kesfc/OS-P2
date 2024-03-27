@@ -5,6 +5,7 @@
 #include <queue>
 #include <vector>
 #include "Process.h"
+#include "algorithms.h"
 using namespace std;
 
 int n, n_CPU, seed, t_cs, t_slice;
@@ -83,15 +84,6 @@ Process process_progress(int is_IO_bound, int process_code){
     }
     cout << "--> CPU burst " << final_cpu_burst_time << "ms" << endl;
     return process;
-}
-
-void FCFS(Process* process, int t_cs, int Process_num){
-    int time = 0;
-    cout << "time 0ms: Simulator started for FCFS [Q <empty>]" << endl;
-    queue<Process> ready_queue;
-    while(Process_num != 0){
-
-    }
 }
 
 int main(int argc, char** argv)
