@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <format>
 #include <cstdlib>
 #include <cmath>
 #include <queue>
@@ -10,13 +11,13 @@ using namespace std;
 
 int n, n_CPU, seed, t_cs, t_slice;
 double lambda, upper_bound, alpha;
+float cpuBurstTime_io, cpuBurstTime_cpu;
 
 int compare(const void *a, const void *b){
     const Process *p1 = (const Process *)a;
     const Process *p2 = (const Process *)b;
-    return p1->add_Que_time - p2->add_Que_time;
+    return p1->arrival_time - p2->arrival_time;
 }
-
 
 double next_exp(){
     //Exponential distribution pseudo-random number generation function
@@ -48,15 +49,59 @@ int IO_burst_time(){
     return ceil(next_exp());
 }
 
+//output info to txt
+void OutputSimout() {
+    
+    //average(123 needs calculation)
+    float cpuUtilization = 123;
+    float cpuBurstTime = 123;
+    float waitTime = 123;
+    float turnAroundTime = 123;
+    int switches = currentAlgo.numOfSwitch_cpu + currentAlgo.numOfSwitch_io;
+    int preemptions = currentAlgo.numOfPreemption_cpu + currentAlgo.numOfPreemption_io;
+
+    cpuUtilization = std::ceil(cpuUtilization * 1000) / 1000;
+    waitTime = std::ceil(waitTime * 1000) / 1000;
+    //...
+
+    //start output
+    outputFile << "Algorithm " << currentAlgo.name << endl;
+    // Set the precision and format of the output stream
+    std::cout << std::fixed << std::setprecision(3);
+
+    std::string result = std:; format("-- CPU utilization: {0}%", cpuUtilization);
+    std::cout << result << std::endl;
+
+    result = std::format("-- average CPU burst time: {0} ms ({1} ms/{2} ms)", cpuBurstTime, cpuBurstTime_cpu, cpuBurstTime_io);
+    std::cout << result << std::endl;
+
+    result = std::format("-- average wait time: {0} ms ({1} ms/{2} ms)",);
+    std::cout << result << std::endl;
+
+    result = std::format("-- average turnaround time: {0} ms ({1} ms/{2} ms)", );
+    std::cout << result << std::endl;
+
+    // Set the precision and format of the output stream
+    std::cout << std::fixed << std::setprecision(0);
+
+    result = std::format("-- number of context switches: {0} ({1}/{2})", );
+    std::cout << result << std::endl;
+
+    result = std::format("-- number of preemptions: {0} ({1}/{2})", );
+    std::cout << result << std::endl;
+
+}
+
 Process process_progress(int is_IO_bound, int process_code){
     double arrival_time = next_arrival_time();
     int Burst_number = number_burst();
     char process_name = static_cast<char>(process_code);
     string bound = is_IO_bound ? "I/O" : "CPU";
+    
     // Carete an Process 
     cout << process_name << " " << arrival_time << " " << Burst_number << endl;
     //Process process(process_name, arrival_time, Burst_number, Burst_number);
-    Process process = Process(process_name, arrival_time, Burst_number, Burst_number);
+    Process process = Process(process_name, arrival_time, Burst_number, Burst_number, is_IO_bound);
     // Header info
    std:: cout << bound << "-bound process " << process_name << ": arrival time " << arrival_time <<
         "ms; " << Burst_number << " CPU burst" << (Burst_number != 1 ? "s" : "") << ":" << endl;
@@ -84,6 +129,18 @@ Process process_progress(int is_IO_bound, int process_code){
     }
     cout << "--> CPU burst " << final_cpu_burst_time << "ms" << endl;
     return process;
+}
+
+void CalculateCpuBurstTime(std::vector<Process> &processes) {
+    for (const auto& process : processes) {
+        // Sum up the burst_time 
+        if (process.isCpuBound) {
+            cpuBurstTime_cpu += std::accumulate(std::begin(process.burst_time), std::end(process.burst_time), 0);
+        }
+        else {
+            cpuBurstTime_io += std::accumulate(std::begin(process.burst_time), std::end(process.burst_time), 0);
+        }
+    }
 }
 
 int main(int argc, char** argv)
@@ -124,11 +181,68 @@ int main(int argc, char** argv)
             processes.push_back(process_progress(0, asciiValue));
         }
     }
+
+    CalculateCpuBurstTime(processes);
     // qsort(process, n, sizeof(Process), compare);
-    // FCFS(process, t_cs, n);
+
+    //generate simout
+    outputFile.open("simout.txt");
+    //print part 2 start info
+    std::cout << "<<< PROJECT PART II -- t_cs=" << t_cs << "ms; alpha=" << alpha << "; t_slice=" << t_slice << "ms >>>" << endl;
+    FCFS(process, t_cs, n);
+
 
     //free memory
     for(int i = 0; i < n; i++){
         processes[i].free_self();
     }
 }
+
+class Algo {
+public:
+    string name = "";
+    int turnAroundTime_cpu = 0;
+    int turnAroundTime_io = 0;
+    int waitTime_cpu = 0;
+    int waitTime_io = 0;
+    int numOfSwitch_cpu = 0;
+    int numOfSwitch_io = 0;
+    int numOfPreemption_cpu = 0;
+    int numOfPreemption_io = 0;
+
+    virtual void Start() {
+
+    }
+
+    virtual void ProcessArrival() {
+
+    }
+
+    virtual void StartCpu() {
+
+    }
+
+    virtual void FinishCpu() {
+
+    }
+
+    virtual void TauRecalculated() {
+
+    }
+
+    virtual void Preemption() {
+
+    }
+
+    virtual void StartIO() {
+
+    }
+
+    virtual void FinishIO() {
+
+    }
+
+    virtual void LastCpuBurst() {
+
+    }
+};

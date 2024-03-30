@@ -3,14 +3,15 @@
 
 class Process{
     public:
+        bool isCpuBound;
         char process_name;
-        int add_Que_time;
+        int arrival_time;
         int burst_number;
         int burst_remaining;
         int* burst_time;
         int* io_time;
         Process();
-        Process(char process_name, int Arrival_time, const int Burst_number, const int Burst_remaining);
+        Process(char process_name, int Arrival_time, const int Burst_number, const int Burst_remaining, bool isIObound);
         void add_burst(int burst_time, int io_time);
         void free_self();
 };
