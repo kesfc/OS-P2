@@ -6,10 +6,10 @@
 #include <vector>
 #include "Process.h"
 #include "algorithms.h"
-//using namespace std;
+using namespace std;
 
 int n, n_CPU, seed, t_cs, t_slice;
-double lambda, alpha, upperBound;
+double lambda, upper_bound, alpha;
 
 int compare(const void *a, const void *b){
     const Process *p1 = (const Process *)a;
@@ -24,7 +24,7 @@ double next_exp(){
     while(1){
         next_value = drand48();
         next_value = (-log(next_value) / lambda);
-        if (next_value <= upperBound) {
+        if(next_value <= upper_bound){
             return next_value;
         }
     }
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
         n_CPU = stoi(argv[2]);
         seed = stoi(argv[3]);
         lambda = stod(argv[4]);
-        upperBound = stod(argv[5]);
+        upper_bound = stod(argv[5]);
         t_cs = stod(argv[6]);
         alpha = stoi(argv[7]);
         t_slice = stod(argv[8]);
