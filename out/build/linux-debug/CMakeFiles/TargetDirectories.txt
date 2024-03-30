@@ -1,0 +1,5 @@
+/mnt/c/Users/Administrator/Desktop/operating system/project/OS-P2/out/build/linux-debug/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/Administrator/Desktop/operating system/project/OS-P2/out/build/linux-debug/CMakeFiles/edit_cache.dir
+/mnt/c/Users/Administrator/Desktop/operating system/project/OS-P2/out/build/linux-debug/OS-P2/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/Administrator/Desktop/operating system/project/OS-P2/out/build/linux-debug/OS-P2/CMakeFiles/edit_cache.dir
+/mnt/c/Users/Administrator/Desktop/operating system/project/OS-P2/out/build/linux-debug/OS-P2/CMakeFiles/part2.dir
