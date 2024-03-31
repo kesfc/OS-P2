@@ -6,4 +6,5 @@
 using namespace std;
 std::ofstream outputFile;
 Algo currentAlgo;
+Process* runningProcess;
 #endif

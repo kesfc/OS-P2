@@ -6,18 +6,8 @@
 #include "algorithms.h"
 using namespace std;
 
-class FCFS : Algo{
+class FCFS : public Algo{
 public:
-    void FCFS(Process* process, int t_cs, int Process_num) {
-        int time = 0;
-        cout << "time 0ms: Simulator started for FCFS [Q <empty>]" << endl;
-        queue<Process> ready_queue;
-        while (Process_num != 0) {
-
-        }
-    }
-
-    
-
+	FCFS(string& name, vector<Process> processes) : Algo(name, processes) {}
 };
 
