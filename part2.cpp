@@ -11,7 +11,7 @@
 #include "algorithms.h"
 using namespace std;
 
-const int n, n_CPU, seed, t_cs, t_slice;
+int n, n_CPU, seed, t_cs, t_slice;
 double lambda, upper_bound, alpha;
 float cpuBurstTime_io, cpuBurstTime_cpu;
 
@@ -71,7 +71,7 @@ void OutputSimout() {
     // Set the precision and format of the output stream
     std::cout << std::fixed << std::setprecision(3);
 
-    std::string result = std:; format("-- CPU utilization: {0}%", cpuUtilization);
+    std::string result = std::format("-- CPU utilization: {0}%", cpuUtilization);
     std::cout << result << std::endl;
 
     result = std::format("-- average CPU burst time: {0} ms ({1} ms/{2} ms)", cpuBurstTime, cpuBurstTime_cpu, cpuBurstTime_io);
@@ -201,6 +201,7 @@ int main(int argc, char** argv)
     }
 }
 
+
 class Algo {
 public:
     string name = "";
@@ -216,7 +217,7 @@ public:
     int numOfPreemption_cpu = 0;
     int numOfPreemption_io = 0;
 
-    Algo(string name, vector<process> processes) : name(name), processes(processes) {}
+    Algo(string name, vector<Process> processes) : name(name), processes(processes) {}
     /// <summary>
     /// [0 = context switch done]
     /// [1 = CPU completion]
@@ -224,20 +225,19 @@ public:
     /// [3 = I/O burst completion]
     /// [4 = new process arrival]
     /// </summary>
-    struct Command { 
-        int time; 
+    struct Command {
+        int time;
         int type;
-        Process &process;
-        std::function<void(Process)> callback;
+        Process& process;
 
-        Command(int t, int tp, Process* p, std::function<void(Process&)> cb)
-            : time(t), type(tp), process(*p), callback(cb) {}
+        Command(int t, int tp, Process* p)
+            : time(t), type(tp), process(*p) {}
     };
 
-    std::unordered_map<int, vector<Command>> commandBuffer = new();
-    
+    std::unordered_map<int, vector<Command>> commandBuffer;
+
     bool hasCommand(int time) {
-        if (commandBuffer[time].empty)
+        if (commandBuffer[time].empty())
             return false;
         else {
             return true;
@@ -269,23 +269,38 @@ public:
             //pop first command
             commandBuffer[time].erase(commandBuffer[time].begin());
 
-            c.callback(c.time);
+            switch (c.type) {
+                case 0:
+                    SwitchingDone();
+                    break;
+                case 1:
+                    FinishCpu(c.process);
+                    break;
+                case 2: 
+                    StartCpu(c.process);
+                    break; 
+                case 3:
+                    FinishIO(c.process);
+                    break;
+                case 4:
+                    ProcessArrival(c.process);
+                    break;
+            }
         }
     }
 
     void setup(vector<Process> process) {
         currentTime = 0;
-        ready_queue = new();
         processes = process;
-        
+
         Start();
     }
 
     virtual void Start() {
-        cout << "time 0ms: Simulator started for " << name <<" [Q <empty>]" << endl;
+        cout << "time 0ms: Simulator started for " << name << " [Q <empty>]" << endl;
         //add all process in queue command
         for (Process process : processes) {
-            Command c(process.arrival_time, 4, process, ProcessArrival);
+            Command c(process.arrival_time, 4, &process);
             addCommand(c, process.arrival_time);
         }
         //start sim
@@ -294,18 +309,19 @@ public:
             if (runningProcess == nullptr && !isLoadingProcess && isAvailable && !readyQueue.empty()) {
                 isLoadingProcess = true;
                 isAvailable = false;
-                Process p = readyQueue.pop();
-                Command c(currentTime + t_cs / 2, 2, p, StartCpu);
-                addCommand(c, currentTime + t_cs /2);
+                Process p = readyQueue.front();
+                readyQueue.pop();
+                Command c(currentTime + t_cs / 2, 2, &p);
+                addCommand(c, currentTime + t_cs / 2);
             }
 
-            while (hasCommand(currentTime) {
+            while (hasCommand(currentTime)) {
                 executeCommands(currentTime);
             }
             currentTime++;
         }
         cout << "time " << currentTime << "ms: Simulator ended for " << currentAlgo.name << " [Q" << GetQueueString() << "]" << endl;
-        
+
     }
 
     bool allProcessCompleted() {
@@ -326,90 +342,90 @@ public:
     //is context switching?
     bool isAvailable = true;
     bool isLoadingProcess = false;
-    virtual void ProcessArrival(Process &process) {
+    virtual void ProcessArrival(Process& process) {
         readyQueue.push(process);
-        cout << "time " << currentTime << "ms: Process " << process.name << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
+        cout << "time " << currentTime << "ms: Process " << process.process_name << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
         //no running process, run
         if (runningProcess == nullptr && !isLoadingProcess && isAvailable) {
             isLoadingProcess = true;
-            Command c(process.arrival_time + t_cs/2, 2, process, StartCpu);
+            Command c(process.arrival_time + t_cs / 2, 2, &process);
             addCommand(c, process.arrival_time);
         }
-        
+
     }
 
-    virtual void StartCpu(Process &process) {
+    virtual void StartCpu(Process& process) {
         isLoadingProcess = false;
         isAvailable = true;
         runningProcess = &process;
         readyQueue.pop();
-        cout << "time " << currentTime << "ms: Process " << runningProcess->process_name << " started using the CPU for "<< runningProcess->getCurrentBurst() << "ms burst [Q " << GetQueueString() << "]" << endl;
+        cout << "time " << currentTime << "ms: Process " << runningProcess->process_name << " started using the CPU for " << runningProcess->getCurrentBurst() << "ms burst [Q " << GetQueueString() << "]" << endl;
 
         int endTime = currentTime + runningProcess->getCurrentBurst();
-        Command c(endTime, 1, process, FinishCpu);
+        Command c(endTime, 1, &process);
         addCommand(c, endTime);
     }
 
-    virtual void FinishCpu(Process &process) {
+    virtual void FinishCpu(Process& process) {
 
-        cout << "time " << currentTime << "ms: Process "<< runningProcess->process_name <<" completed a CPU burst; "<< runningProcess->burst_remaining <<" bursts to go [Q"<< GetQueueString() << "]" << endl;
+        cout << "time " << currentTime << "ms: Process " << runningProcess->process_name << " completed a CPU burst; " << runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
         runningProcess->burst_remaining--;
         //if not terminated, start IO
         if (runningProcess->burst_remaining > 0) {
             int endTime = runningProcess->getCurrentIOBurst() + currentTime;
             cout << "time " << currentTime << "ms: Process " << runningProcess->process_name << " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q" << GetQueueString() << "]" << endl;
-            Command c(endTime, 3, runningProcess, FinishIO);
+            Command c(endTime, 3, runningProcess);
             addCommand(c, endTime);
 
             isAvailable = false;
-            Command c(currentTime + t_cs/2, 0, process, SwitchingDone);
-            addCommand(c, currentTime + t_cs/2);
+            Command c(currentTime + t_cs / 2, 0, &process);
+            addCommand(c, currentTime + t_cs / 2);
         }
         else {
             //last burst
             cout << "time " << currentTime << "ms: Process " << runningProcess->process_name << " switching out of CPU." << endl;
-            cout << "time " << currentTime << "ms: Process " << runningProcess->process_name << " terminated [Q"<< GetQueueString() << "]" << endl;
-        }
-        //all terminated
-        else {
-            
+            cout << "time " << currentTime << "ms: Process " << runningProcess->process_name << " terminated [Q" << GetQueueString() << "]" << endl;
         }
     }
 
-    virtual void TauRecalculated(Process &process) {
+    virtual void TauRecalculated(Process& process) {
 
     }
 
-    virtual void Preemption(Process &process) {
+    virtual void Preemption(Process& process) {
 
     }
 
 
-    virtual void FinishIO(Process &process) {
+    virtual void FinishIO(Process& process) {
         readyQueue.push(process);
-        cout << "time "<< currentTime <<"ms: Process "<< process.process_name <<" completed I/O; added to ready queue [Q"<<GetQueueString() << "]"<<endl;
+        cout << "time " << currentTime << "ms: Process " << process.process_name << " completed I/O; added to ready queue [Q" << GetQueueString() << "]" << endl;
     }
 
-    virtual void LastCpuBurst(Process &process) {
+    virtual void LastCpuBurst(Process& process) {
 
     }
 
-    virtual void SwitchingDone(Process& process) {
+    virtual void SwitchingDone() {
         isAvailable = true;
     }
 
     string GetQueueString() {
         string queueString = "";
-        if (readyQueue.empty){
+        if (readyQueue.empty()) {
             queueString = " <empty>";
         }
         else
         {
-            for (int i = 0; i < readyQueue.size(); i++) {
-                queueString += " " + readyQueue[i].name;
+            std::queue<Process> tempQueue = readyQueue;
+            while (!tempQueue.empty()) {
+                Process& process = tempQueue.front();
+                queueString += " " + process.process_name;
+                tempQueue.pop();
             }
         }
-        
+
         return queueString;
     }
 };
+

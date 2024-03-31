@@ -4,7 +4,8 @@
 #include "Process.h"
 
 using namespace std;
-std::ofstream outputFile;
+ofstream outputFile;
 Algo currentAlgo;
 Process* runningProcess;
 #endif
+
