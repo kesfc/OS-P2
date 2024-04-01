@@ -9,13 +9,48 @@
 #include <iostream>
 using namespace std;
 
+// struct Command {
+//     int time;
+//     int type;
+//     Process& process;
+
+//     Command(int t, int tp, Process* p)
+//         : time(t), type(tp), process(*p) {}
+// };
 struct Command {
     int time;
     int type;
-    Process& process;
+    Process* process;  // Change to a pointer
 
-    Command(int t, int tp, Process* p)
-        : time(t), type(tp), process(*p) {}
+    Command(int t, int tp, Process* p) : time(t), type(tp), process(p) {}
+
+    // Move constructor
+    Command(Command&& other) noexcept
+        : time(other.time), type(other.type), process(other.process) {}
+
+    // Move assignment operator
+    Command& operator=(Command&& other) noexcept {
+        if (this != &other) {
+            time = other.time;
+            type = other.type;
+            process = other.process;
+        }
+        return *this;
+    }
+
+    // Copy constructor
+    Command(const Command& other)
+        : time(other.time), type(other.type), process(other.process) {}
+
+    // Copy assignment operator
+    Command& operator=(const Command& other) {
+        if (this != &other) {
+            time = other.time;
+            type = other.type;
+            process = other.process;
+        }
+        return *this;
+    }
 };
 
 class Algo {
@@ -72,7 +107,6 @@ public:
     virtual void TauRecalculated(Process& process);
 
     virtual void Preemption(Process& process);
-
 
     virtual void FinishIO(Process& process);
 
