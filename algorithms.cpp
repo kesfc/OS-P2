@@ -9,8 +9,9 @@
 using namespace std;
 
 bool Algo::hasCommand(int time) {
-    if (this->commandBuffer[time].empty())
+    if (this->commandBuffer[time].empty()) {
         return false;
+    }
     else {
         return true;
     }
@@ -24,6 +25,8 @@ void Algo::addCommand(Command &command, int time) {
     }
     else {
         this->commandBuffer[time].push_back(command);
+        //cout << commandBuffer[time][0].process->process_name << " at " <<time<< endl;
+        //cout << commandBuffer[time][0].process->process_name << "added at " << time << endl;
     }
 }
 
@@ -32,54 +35,60 @@ void Algo::executeCommands(int time) {
         Command c = this->commandBuffer[time][0];
         //pop first command
         this->commandBuffer[time].erase(this->commandBuffer[time].begin());
-
         switch (c.type) {
             case 0:
                 SwitchingDone();
                 break;
             case 1:
-                FinishCpu(c.process);
+                FinishCpu(*c.process);
                 break;
             case 2: 
-                StartCpu(c.process);
+                StartCpu(*c.process);
                 break; 
             case 3:
-                FinishIO(c.process);
+                FinishIO(*c.process);
                 break;
             case 4:
-                ProcessArrival(c.process);
+                ProcessArrival(*c.process);
                 break;
         }
     }
 }
 
-void Algo::setup(vector<Process> process) {
+void Algo::setup() {
     this->currentTime = 0;
-    this->processes = process;
-    Start();
+    isRemovingProcess = false;
+    isLoadingProcess = false;
+}
+void Algo::newProcessRunCheck() {
+    //Can process next p in readyqueue?
+    if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {
+        this->isLoadingProcess = true;
+        Process* p = &this->readyQueue.front();
+        Command c(this->currentTime + this->t_cs / 2, 2, p);
+        addCommand(c, this->currentTime + this->t_cs / 2);
+    }
 }
 
 void Algo::Start() {
+    setup();
     cout << "time 0ms: Simulator started for " << this->name << " [Q <empty>]" << endl;
     //add all process in queue command
-    for (Process process : this->processes) {
+    for (Process& process : this->processes) {
         Command c(process.arrival_time, 4, &process);
+        //cout << "Me: " << process.process_name <<" In c: " << c.process->process_name << endl;
         addCommand(c, process.arrival_time);
     }
+    this->runningProcess = nullptr;
     //start sim
-    while (!(allProcessCompleted() && isAvailable) && this->currentTime < 999999) {
-        //Can process next process
-        if (this->runningProcess == nullptr && !this->isLoadingProcess && this->isAvailable && !this->readyQueue.empty()) {
-            this->isLoadingProcess = true;
-            this->isAvailable = false;
-            Process p = this->readyQueue.front();
-            this->readyQueue.pop();
-            Command c(this->currentTime + this->t_cs / 2, 2, &p);
-            addCommand(c, this->currentTime + this->t_cs / 2);
-        }
-
+    while (!(allProcessCompleted() && !isRemovingProcess) && this->currentTime < 9999999) {
+        
+        //corner case
+        newProcessRunCheck();
         while (hasCommand(this->currentTime)) {
             executeCommands(this->currentTime);
+            //normal case
+            newProcessRunCheck();
         }
         this->currentTime++;
     }
@@ -105,39 +114,43 @@ void Algo::ProcessArrival(Process& process) {
     this->readyQueue.push(process);
     cout << "time " << this->currentTime << "ms: Process " << process.process_name << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
     //no running process, run
-    if (this->runningProcess == nullptr && !this->isLoadingProcess && this->isAvailable) {
+    //cout << "debug:" << (this->runningProcess == nullptr) << !this->isLoadingProcess << !this->isRemovingProcess << endl;
+    if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess) {
         this->isLoadingProcess = true;
+
         Command c(process.arrival_time + this->t_cs / 2, 2, &process);
-        addCommand(c, process.arrival_time);
+        addCommand(c, process.arrival_time + this->t_cs / 2);
     }
 }
 
 void Algo::StartCpu(Process& process) {
     this->isLoadingProcess = false;
-    this->isAvailable = true;
+    this->isRemovingProcess = false;
     this->runningProcess = &process;
     this->readyQueue.pop();
     cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
     " started using the CPU for " << this->runningProcess->getCurrentBurst() << "ms burst [Q " << GetQueueString() << "]" << endl;
-
     int endTime = this->currentTime + this->runningProcess->getCurrentBurst();
     Command c(endTime, 1, &process);
     addCommand(c, endTime);
 }
 
 void Algo::FinishCpu(Process& process) {
+    this->runningProcess->burst_remaining--;
     cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name <<
         " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
-    this->runningProcess->burst_remaining--;
+    
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
-        int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime;
+        int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
             " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q" << GetQueueString() << "]" << endl;
         Command c(endTime, 3, this->runningProcess);
         addCommand(c, endTime);
 
-        this->isAvailable = false;
+        //context switching
+        this->runningProcess = nullptr;
+        this->isRemovingProcess = true;
         Command c2(this->currentTime + this->t_cs / 2, 0, &process);
         addCommand(c2, this->currentTime + this->t_cs / 2);
     }
@@ -166,7 +179,7 @@ void Algo::LastCpuBurst(Process& process){
 }
 
 void Algo::SwitchingDone() {
-    this->isAvailable = true;
+    this->isRemovingProcess = false;
 }
 
 string Algo::GetQueueString() {
@@ -178,8 +191,8 @@ string Algo::GetQueueString() {
     {
         std::queue<Process> tempQueue = this->readyQueue;
         while (!tempQueue.empty()) {
-            Process& process = tempQueue.front();
-            queueString += " " + process.process_name;
+            queueString += " ";
+            queueString += tempQueue.front().process_name;
             tempQueue.pop();
         }
     }
@@ -189,7 +202,7 @@ string Algo::GetQueueString() {
 
 bool Algo::compareCommand(Command a, Command b) {
     if (a.type == b.type) {
-        return a.process.process_name < b.process.process_name;
+        return a.process->process_name < b.process->process_name;
     }
     else
         return a.type < b.type;

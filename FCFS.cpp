@@ -1,13 +1,9 @@
 
-#include <fstream>
-#include <iostream>
-#include <queue>
-#include "Process.h"
-#include "algorithms.h"
-using namespace std;
+#include "FCFS.h"
 
-class FCFS : public Algo{
-public:
-	FCFS(string& name, vector<Process> processes, int t_cs) : Algo(name, processes, t_cs) {}
-};
+#include "algorithms.h"
+
+// FCFS constructor implementation
+FCFS::FCFS(std::string name, std::vector<Process> processes, int t_cs)
+    : Algo(name, processes, t_cs) {}
 

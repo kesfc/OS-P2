@@ -27,6 +27,11 @@ void Process::add_burst(int burst_time, int io_time){
     this->burst_number++;
 }
 
+void Process::add_burst(int burst_time) {
+    this->cpu_bursts[this->burst_number] = burst_time;
+    this->burst_number++;
+}
+
 void Process::free_self(){
     delete[] cpu_bursts;
     delete[] io_bursts;
@@ -41,5 +46,5 @@ int Process::getCurrentBurst() {
 }
 
 int Process::getCurrentIOBurst() {
-    return io_bursts[burst_number - burst_remaining];
+    return io_bursts[burst_number - burst_remaining - 1];
 }

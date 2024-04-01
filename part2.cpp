@@ -1,18 +1,20 @@
 #include <iostream>
 #include <string>
-#include <format>
 #include <cstdlib>
 #include <cmath>
 #include <queue>
 #include <unordered_map>
 #include <vector>
 #include <functional>
+#include <numeric>
+#include <iomanip>
 #include "Process.h"
 #include "algorithms.h"
+#include "FCFS.h"
 using namespace std;
 
 int n, n_CPU, seed, t_cs, t_slice;
-double lambda, upper_bound, alpha;
+double lambda, upperBound, alpha;
 float cpuBurstTime_io, cpuBurstTime_cpu;
 
 int compare(const void *a, const void *b){
@@ -27,7 +29,7 @@ double next_exp(){
     while(1){
         next_value = drand48();
         next_value = (-log(next_value) / lambda);
-        if(next_value <= upper_bound){
+        if(next_value <= upperBound){
             return next_value;
         }
     }
@@ -66,30 +68,30 @@ void OutputSimout(Algo &currentAlgo) {
     //...
 
     //start output
-    outputFile << "Algorithm " << currentAlgo.name << endl;
-    // Set the precision and format of the output stream
-    std::cout << std::fixed << std::setprecision(3);
+    //outputFile << "Algorithm " << currentAlgo.name << endl;
+    //// Set the precision and format of the output stream
+    //std::cout << std::fixed << std::setprecision(3);
 
-    std::string result = std::format("-- CPU utilization: {0}%", cpuUtilization);
-    std::cout << result << std::endl;
+    //std::string result = std::format("-- CPU utilization: {0}%", cpuUtilization);
+    //std::cout << result << std::endl;
 
-    result = std::format("-- average CPU burst time: {0} ms ({1} ms/{2} ms)", cpuBurstTime, cpuBurstTime_cpu, cpuBurstTime_io);
-    std::cout << result << std::endl;
+    //result = std::format("-- average CPU burst time: {0} ms ({1} ms/{2} ms)", cpuBurstTime, cpuBurstTime_cpu, cpuBurstTime_io);
+    //std::cout << result << std::endl;
 
-    result = std::format("-- average wait time: {0} ms ({1} ms/{2} ms)",);
-    std::cout << result << std::endl;
+    //result = std::format("-- average wait time: {0} ms ({1} ms/{2} ms)",);
+    //std::cout << result << std::endl;
 
-    result = std::format("-- average turnaround time: {0} ms ({1} ms/{2} ms)", );
-    std::cout << result << std::endl;
+    //result = std::format("-- average turnaround time: {0} ms ({1} ms/{2} ms)", );
+    //std::cout << result << std::endl;
 
-    // Set the precision and format of the output stream
-    std::cout << std::fixed << std::setprecision(0);
+    //// Set the precision and format of the output stream
+    //std::cout << std::fixed << std::setprecision(0);
 
-    result = std::format("-- number of context switches: {0} ({1}/{2})", );
-    std::cout << result << std::endl;
+    //result = std::format("-- number of context switches: {0} ({1}/{2})", );
+    //std::cout << result << std::endl;
 
-    result = std::format("-- number of preemptions: {0} ({1}/{2})", );
-    std::cout << result << std::endl;
+    //result = std::format("-- number of preemptions: {0} ({1}/{2})", );
+    //std::cout << result << std::endl;
 
 }
 
@@ -125,9 +127,10 @@ Process process_progress(int is_IO_bound, int process_code){
 
     // Special for the last CPU burst
     int final_cpu_burst_time = CPU_burst_time();
-     if(!is_IO_bound){
+    if(!is_IO_bound){
         final_cpu_burst_time *= 4;
     }
+    process.add_burst(final_cpu_burst_time);
     cout << "--> CPU burst " << final_cpu_burst_time << "ms" << endl;
     return process;
 }
@@ -136,10 +139,10 @@ void CalculateCpuBurstTime(std::vector<Process> &processes) {
     for (const auto& process : processes) {
         // Sum up the burst_time 
         if (process.isCpuBound) {
-            cpuBurstTime_cpu += std::accumulate(std::begin(process.cpu_bursts), std::end(process.cpu_bursts), 0);
+            cpuBurstTime_cpu += std::accumulate(process.cpu_bursts, process.cpu_bursts + process.burst_number, 0);
         }
         else {
-            cpuBurstTime_io += std::accumulate(std::begin(process.cpu_bursts), std::end(process.cpu_bursts), 0);
+            cpuBurstTime_io += std::accumulate(process.io_bursts, process.io_bursts + process.burst_number, 0);
         }
     }
 }
@@ -161,7 +164,7 @@ int main(int argc, char** argv)
         n_CPU = stoi(argv[2]);
         seed = stoi(argv[3]);
         lambda = stod(argv[4]);
-        upper_bound = stod(argv[5]);
+        upperBound = stod(argv[5]);
         t_cs = stod(argv[6]);
         alpha = stoi(argv[7]);
         t_slice = stod(argv[8]);
@@ -189,12 +192,13 @@ int main(int argc, char** argv)
     // qsort(process, n, sizeof(Process), compare);
 
     //generate simout
-    outputFile.open("simout.txt");
+    //outputFile.open("simout.txt");
     //print part 2 start info
+    std::cout << std::fixed << std::setprecision(2);
     std::cout << "<<< PROJECT PART II -- t_cs=" << t_cs << "ms; alpha=" << alpha << "; t_slice=" << t_slice << "ms >>>" << endl;
     
-    FCFS fcfs = FCFS("FCFS", processes);
-    fcfs.start();
+    FCFS fcfs = FCFS("FCFS", processes, t_cs);
+    fcfs.Start();
 
     //free memory
     for(int i = 0; i < n; i++){

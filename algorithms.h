@@ -9,18 +9,17 @@
 #include <iostream>
 using namespace std;
 
-// struct Command {
-//     int time;
-//     int type;
-//     Process& process;
-
-//     Command(int t, int tp, Process* p)
-//         : time(t), type(tp), process(*p) {}
-// };
+/// <summary>
+    /// [0 = context switch done]
+    /// [1 = CPU completion]
+    /// [2 = starts using CPU]
+    /// [3 = I/O burst completion]
+    /// [4 = new process arrival]
+    /// </summary>
 struct Command {
     int time;
     int type;
-    Process* process;  // Change to a pointer
+    Process *process;  // Change to a pointer
 
     Command(int t, int tp, Process* p) : time(t), type(tp), process(p) {}
 
@@ -59,7 +58,7 @@ public:
     vector<Process> processes;
     queue<Process> readyQueue;
     
-    Process* runningProcess;
+    Process* runningProcess = NULL;
     int currentTime = 0;
     int turnAroundTime_cpu = 0;
     int turnAroundTime_io = 0;
@@ -72,17 +71,10 @@ public:
     int t_cs;
 
     //is context switching?
-    bool isAvailable = true;
+    bool isRemovingProcess = false;
     bool isLoadingProcess = false;
 
     Algo(string name, vector<Process> processes, int t_cs) : name(name), processes(processes), t_cs(t_cs) {}
-    /// <summary>
-    /// [0 = context switch done]
-    /// [1 = CPU completion]
-    /// [2 = starts using CPU]
-    /// [3 = I/O burst completion]
-    /// [4 = new process arrival]
-    /// </summary>
 
     std::unordered_map<int, vector<Command>> commandBuffer;
 
@@ -91,8 +83,6 @@ public:
     void addCommand(Command &command, int time);
 
     void executeCommands(int time);
-
-    void setup(vector<Process> process);
 
     virtual void Start();
 
@@ -117,6 +107,10 @@ public:
     string GetQueueString();
 
     static bool compareCommand(Command a, Command b);
+
+private:
+    void newProcessRunCheck();
+    void setup();
 };
 #endif
 
