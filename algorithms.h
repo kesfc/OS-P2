@@ -56,7 +56,7 @@ class Algo {
 public:
     string name = "";
     vector<Process> processes;
-    queue<Process> readyQueue;
+    queue<Process*> readyQueue;
     
     Process* runningProcess = NULL;
     int currentTime = 0;
@@ -80,7 +80,7 @@ public:
 
     bool hasCommand(int time);
 
-    void addCommand(Command &command, int time);
+    void addCommand(Command command, int time);
 
     void executeCommands(int time);
 

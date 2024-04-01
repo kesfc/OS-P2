@@ -17,7 +17,7 @@ bool Algo::hasCommand(int time) {
     }
 }
 
-void Algo::addCommand(Command &command, int time) {
+void Algo::addCommand(Command command, int time) {
     if (hasCommand(time)) {
         this->commandBuffer[time].push_back(command);
         //sort commands
@@ -25,8 +25,6 @@ void Algo::addCommand(Command &command, int time) {
     }
     else {
         this->commandBuffer[time].push_back(command);
-        //cout << commandBuffer[time][0].process->process_name << " at " <<time<< endl;
-        //cout << commandBuffer[time][0].process->process_name << "added at " << time << endl;
     }
 }
 
@@ -64,7 +62,7 @@ void Algo::newProcessRunCheck() {
     //Can process next p in readyqueue?
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {
         this->isLoadingProcess = true;
-        Process* p = &this->readyQueue.front();
+        Process* p = this->readyQueue.front();
         Command c(this->currentTime + this->t_cs / 2, 2, p);
         addCommand(c, this->currentTime + this->t_cs / 2);
     }
@@ -76,13 +74,11 @@ void Algo::Start() {
     //add all process in queue command
     for (Process& process : this->processes) {
         Command c(process.arrival_time, 4, &process);
-        //cout << "Me: " << process.process_name <<" In c: " << c.process->process_name << endl;
         addCommand(c, process.arrival_time);
     }
     this->runningProcess = nullptr;
     //start sim
     while (!(allProcessCompleted() && !isRemovingProcess) && this->currentTime < 9999999) {
-        
         //corner case
         newProcessRunCheck();
         while (hasCommand(this->currentTime)) {
@@ -92,6 +88,7 @@ void Algo::Start() {
         }
         this->currentTime++;
     }
+    currentTime--;
     cout << "time " << this->currentTime << "ms: Simulator ended for " << this->name << " [Q" << GetQueueString() << "]" << endl;
 }
 
@@ -103,6 +100,7 @@ bool Algo::allProcessCompleted() {
     bool completed = true;
     for (int i = 0; i < this->processes.size(); i++) {
         if (!this->processes[i].isCompleted()) {
+            //if (currentTime >= 324062 && currentTime <= 324063)cout << "Debug:"<<processes[i].process_name << processes[i].burst_remaining << endl;
             completed = false;
             break;
         }
@@ -111,10 +109,10 @@ bool Algo::allProcessCompleted() {
 }
 
 void Algo::ProcessArrival(Process& process) {
-    this->readyQueue.push(process);
+    this->readyQueue.push(&process);
+    cout << process.process_name << endl;
     cout << "time " << this->currentTime << "ms: Process " << process.process_name << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
     //no running process, run
-    //cout << "debug:" << (this->runningProcess == nullptr) << !this->isLoadingProcess << !this->isRemovingProcess << endl;
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess) {
         this->isLoadingProcess = true;
 
@@ -158,6 +156,11 @@ void Algo::FinishCpu(Process& process) {
         //last burst
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << " switching out of CPU." << endl;
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << " terminated [Q" << GetQueueString() << "]" << endl;
+
+        this->runningProcess = nullptr;
+        this->isRemovingProcess = true;
+        Command c2(this->currentTime + this->t_cs / 2, 0, &process);
+        addCommand(c2, this->currentTime + this->t_cs / 2);
     }
 }
 
@@ -170,7 +173,7 @@ void Algo::Preemption(Process& process){
 }
 
 void Algo::FinishIO(Process& process) {
-    this->readyQueue.push(process);
+    this->readyQueue.push(&process);
     cout << "time " << this->currentTime << "ms: Process " << process.process_name << " completed I/O; added to ready queue [Q" << GetQueueString() << "]" << endl;
 }
 
@@ -189,10 +192,10 @@ string Algo::GetQueueString() {
     }
     else
     {
-        std::queue<Process> tempQueue = this->readyQueue;
+        std::queue<Process*> tempQueue = this->readyQueue;
         while (!tempQueue.empty()) {
             queueString += " ";
-            queueString += tempQueue.front().process_name;
+            queueString += tempQueue.front()->process_name;
             tempQueue.pop();
         }
     }

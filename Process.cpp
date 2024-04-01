@@ -38,7 +38,8 @@ void Process::free_self(){
 }
 
 bool Process::isCompleted() {
-    return false;
+    
+    return (burst_remaining == 0);
 }
 
 int Process::getCurrentBurst() {
