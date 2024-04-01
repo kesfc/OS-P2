@@ -11,6 +11,7 @@
 #include "Process.h"
 #include "algorithms.h"
 #include "FCFS.h"
+#include "SJF.h"
 using namespace std;
 
 int n, n_CPU, seed, t_cs, t_slice;
@@ -199,6 +200,9 @@ int main(int argc, char** argv)
     
     FCFS fcfs = FCFS("FCFS", processes, t_cs);
     fcfs.Start();
+
+    SJF sjf = SJF("SJF", processes, t_cs, alpha, lambda);
+    sjf.Start();
 
     //free memory
     for(int i = 0; i < n; i++){

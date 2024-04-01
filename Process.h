@@ -11,6 +11,7 @@ class Process{
         int* cpu_bursts;
         int* io_bursts;
         int terminatedTime;
+        int tau;
         Process();
         Process(char process_name, int Arrival_time, const int Burst_number, const int Burst_remaining, bool isIObound);
         void add_burst(int burst_time, int io_time);
