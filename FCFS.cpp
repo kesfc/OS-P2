@@ -2,12 +2,12 @@
 #include <fstream>
 #include <iostream>
 #include <queue>
-#include "process.h"
+#include "Process.h"
 #include "algorithms.h"
 using namespace std;
 
 class FCFS : public Algo{
 public:
-	FCFS(string& name, vector<Process> processes) : Algo(name, processes) {}
+	FCFS(string& name, vector<Process> processes, int t_cs) : Algo(name, processes, t_cs) {}
 };
 
