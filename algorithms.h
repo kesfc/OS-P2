@@ -109,7 +109,7 @@ public:
     static bool compareCommand(Command a, Command b);
 
 private:
-    void newProcessRunCheck();
+    abstract void newProcessRunCheck();
     void setup();
 };
 #endif

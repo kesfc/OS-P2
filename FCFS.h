@@ -9,6 +9,7 @@
 class FCFS : public Algo {
 public:
     FCFS(std::string name, std::vector<Process> processes, int t_cs);
+    void newProcessRunCheck() override;
 };
 
 #endif

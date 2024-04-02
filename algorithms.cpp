@@ -58,14 +58,10 @@ void Algo::setup() {
     isRemovingProcess = false;
     isLoadingProcess = false;
 }
+
 void Algo::newProcessRunCheck() {
     //Can process next p in readyqueue?
-    if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {
-        this->isLoadingProcess = true;
-        Process* p = this->readyQueue.front();
-        Command c(this->currentTime + this->t_cs / 2, 2, p);
-        addCommand(c, this->currentTime + this->t_cs / 2);
-    }
+    
 }
 
 void Algo::Start() {
