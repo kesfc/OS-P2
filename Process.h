@@ -13,7 +13,7 @@ class Process{
         int terminatedTime;
         int tau;
         Process();
-        Process(char process_name, int Arrival_time, const int Burst_number, const int Burst_remaining, bool isIObound);
+        Process(char process_name, int Arrival_time, const int Burst_number, const int Burst_remaining, bool isIObound, double lambda);
         void add_burst(int burst_time, int io_time);
         void add_burst(int burst_time);
         void free_self();

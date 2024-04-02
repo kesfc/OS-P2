@@ -8,8 +8,8 @@
 
 class SJF : public Algo {
 public:
-    SJF(std::string name, std::vector<Process> processes, int t_cs, int alpha, int lambda);
-    void Start();
+    SJF(std::string name, std::vector<Process> processes, int t_cs, int alpha);
+    void ProcessArrival(Process& process) override;
 private:
 };
 

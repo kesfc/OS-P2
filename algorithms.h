@@ -71,7 +71,6 @@ public:
     int t_cs;
 
     // For SJF and SRT
-    int initial_tau = 1000;
     int alpha = 0;
     //is context switching?
     bool isRemovingProcess = false;
