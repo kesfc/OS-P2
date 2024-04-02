@@ -70,6 +70,9 @@ public:
     int numOfPreemption_io = 0;
     int t_cs;
 
+    // For SJF and SRT
+    int initial_tau = 1000;
+    int alpha = 0;
     //is context switching?
     bool isRemovingProcess = false;
     bool isLoadingProcess = false;
@@ -107,9 +110,9 @@ public:
     string GetQueueString();
 
     static bool compareCommand(Command a, Command b);
+    virtual void newProcessRunCheck();
 
 private:
-    abstract void newProcessRunCheck();
     void setup();
 };
 #endif

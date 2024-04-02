@@ -167,7 +167,7 @@ int main(int argc, char** argv)
         lambda = stod(argv[4]);
         upperBound = stod(argv[5]);
         t_cs = stod(argv[6]);
-        alpha = stoi(argv[7]);
+        alpha = stod(argv[7]);
         t_slice = stod(argv[8]);
     }
     catch(std::invalid_argument& e){
@@ -197,10 +197,8 @@ int main(int argc, char** argv)
     //print part 2 start info
     std::cout << std::fixed << std::setprecision(2);
     std::cout << "<<< PROJECT PART II -- t_cs=" << t_cs << "ms; alpha=" << alpha << "; t_slice=" << t_slice << "ms >>>" << endl;
-    
     FCFS fcfs = FCFS("FCFS", processes, t_cs);
     fcfs.Start();
-
     SJF sjf = SJF("SJF", processes, t_cs, alpha, lambda);
     sjf.Start();
 
