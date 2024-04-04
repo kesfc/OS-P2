@@ -1,6 +1,5 @@
 
 #include "FCFS.h"
-
 #include "algorithms.h"
 
 // FCFS constructor implementation

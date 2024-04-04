@@ -53,6 +53,11 @@ void Algo::executeCommands(int time) {
     }
 }
 
+string Algo::runningProcessName(Process & process){
+    string name(1, process.process_name);
+    return name;
+}
+
 void Algo::setup() {
     this->currentTime = 0;
     isRemovingProcess = false;
@@ -103,7 +108,7 @@ bool Algo::allProcessCompleted() {
 void Algo::ProcessArrival(Process& process) {
     this->readyQueue.push_back(&process);
     cout << process.process_name << endl;
-    cout << "time " << this->currentTime << "ms: Process " << process.process_name << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
+    cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
     //no running process, run
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess) {
         this->isLoadingProcess = true;
@@ -118,7 +123,7 @@ void Algo::StartCpu(Process& process) {
     this->isRemovingProcess = false;
     this->runningProcess = &process;
     this->readyQueue.erase(this->readyQueue.begin());
-    cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
+    cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
     " started using the CPU for " << this->runningProcess->getCurrentBurst() << "ms burst [Q " << GetQueueString() << "]" << endl;
     int endTime = this->currentTime + this->runningProcess->getCurrentBurst();
     Command c(endTime, 1, &process);
@@ -127,13 +132,13 @@ void Algo::StartCpu(Process& process) {
 
 void Algo::FinishCpu(Process& process) {
     this->runningProcess->burst_remaining--;
-    cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name <<
+    cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) <<
         " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
     
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
         int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
             " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q" << GetQueueString() << "]" << endl;
         Command c(endTime, 3, this->runningProcess);
         addCommand(c, endTime);
@@ -146,8 +151,8 @@ void Algo::FinishCpu(Process& process) {
     }
     else {
         //last burst
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << " switching out of CPU." << endl;
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << " terminated [Q" << GetQueueString() << "]" << endl;
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << " switching out of CPU." << endl;
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << " terminated [Q" << GetQueueString() << "]" << endl;
 
         this->runningProcess = nullptr;
         this->isRemovingProcess = true;
@@ -166,7 +171,7 @@ void Algo::Preemption(Process& process){
 
 void Algo::FinishIO(Process& process) {
     this->readyQueue.push_back(&process);
-    cout << "time " << this->currentTime << "ms: Process " << process.process_name << " completed I/O; added to ready queue [Q" << GetQueueString() << "]" << endl;
+    cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; added to ready queue [Q" << GetQueueString() << "]" << endl;
 }
 
 void Algo::LastCpuBurst(Process& process){

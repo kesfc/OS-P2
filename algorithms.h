@@ -86,6 +86,8 @@ public:
 
     void executeCommands(int time);
 
+    virtual string runningProcessName(Process & process);
+
     virtual void Start();
 
     bool allProcessCompleted();
