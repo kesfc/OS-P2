@@ -5,14 +5,16 @@
 #include <vector>  
 #include "algorithms.h"
 #include "Process.h"
+using namespace std;
 
 class SJF : public Algo {
 public:
-    SJF(std::string name, std::vector<Process> processes, int t_cs, double alpha);
+    SJF(std::string name, vector<Process> processes, int t_cs, double alpha);
     void ProcessArrival(Process& process) override;
     void StartCpu(Process& process) override;
     void FinishCpu(Process& process) override;
     void FinishIO(Process& process) override;
+    void newProcessRunCheck() override;
 private:
     double alpha;
 };
