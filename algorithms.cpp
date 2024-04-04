@@ -58,15 +58,7 @@ void Algo::setup() {
     isRemovingProcess = false;
     isLoadingProcess = false;
 }
-void Algo::newProcessRunCheck() {
-    //Can process next p in readyqueue?
-    if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {
-        this->isLoadingProcess = true;
-        Process* p = this->readyQueue.front();
-        Command c(this->currentTime + this->t_cs / 2, 2, p);
-        addCommand(c, this->currentTime + this->t_cs / 2);
-    }
-}
+
 
 void Algo::Start() {
     setup();
@@ -109,7 +101,7 @@ bool Algo::allProcessCompleted() {
 }
 
 void Algo::ProcessArrival(Process& process) {
-    this->readyQueue.push(&process);
+    this->readyQueue.push_back(&process);
     cout << process.process_name << endl;
     cout << "time " << this->currentTime << "ms: Process " << process.process_name << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
     //no running process, run
@@ -125,7 +117,7 @@ void Algo::StartCpu(Process& process) {
     this->isLoadingProcess = false;
     this->isRemovingProcess = false;
     this->runningProcess = &process;
-    this->readyQueue.pop();
+    this->readyQueue.erase(this->readyQueue.begin());
     cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
     " started using the CPU for " << this->runningProcess->getCurrentBurst() << "ms burst [Q " << GetQueueString() << "]" << endl;
     int endTime = this->currentTime + this->runningProcess->getCurrentBurst();
@@ -173,7 +165,7 @@ void Algo::Preemption(Process& process){
 }
 
 void Algo::FinishIO(Process& process) {
-    this->readyQueue.push(&process);
+    this->readyQueue.push_back(&process);
     cout << "time " << this->currentTime << "ms: Process " << process.process_name << " completed I/O; added to ready queue [Q" << GetQueueString() << "]" << endl;
 }
 
@@ -192,11 +184,9 @@ string Algo::GetQueueString() {
     }
     else
     {
-        std::queue<Process*> tempQueue = this->readyQueue;
-        while (!tempQueue.empty()) {
+        for(Process* p : this->readyQueue){
             queueString += " ";
-            queueString += tempQueue.front()->process_name;
-            tempQueue.pop();
+            queueString += p->process_name;
         }
     }
     return queueString;
