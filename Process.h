@@ -10,6 +10,7 @@ class Process{
         int burst_remaining;
         int* cpu_bursts;
         int* io_bursts;
+        int* remain_cpu_bursts;
         int terminatedTime;
         int tau;
         Process();

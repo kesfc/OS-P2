@@ -38,10 +38,10 @@ void SJF::FinishCpu(Process& process) {
     double temp = this->alpha * this->runningProcess->getCurrentBurst() + (1 - this->alpha) * process.tau;
     int Newtau = std::ceil(temp);
     this->runningProcess->burst_remaining--;
-    cout << "time " << this->currentTime << "ms: Process " << process.process_name << " (tau " << process.tau<< "ms) "<< this->runningProcess->process_name <<
-        " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
+        cout << "time " << this->currentTime << "ms: Process " << process.process_name << " (tau " << process.tau<< "ms) "<< this->runningProcess->process_name <<
+        " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
         int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
             " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q" << GetQueueString() << "]" << endl;
@@ -58,7 +58,6 @@ void SJF::FinishCpu(Process& process) {
     }
     else {
         //last burst
-        cout << "time " << this->currentTime << "ms: Process " << process.process_name << " (tau " << process.tau<< "ms) " << this->runningProcess->process_name << " switching out of CPU." << endl;
         cout << "time " << this->currentTime << "ms: Process " << process.process_name << " (tau " << process.tau<< "ms) " << this->runningProcess->process_name << " terminated [Q" << GetQueueString() << "]" << endl;
 
         this->runningProcess = nullptr;

@@ -18,6 +18,7 @@ Process::Process(char process_name, int Arrival_time, const int Burst_number, co
     this->burst_remaining = Burst_remaining;
     this->cpu_bursts = new int[Burst_number];
     this->io_bursts = new int[Burst_number];
+    this->remain_cpu_bursts = new int[Burst_number];
     this->isCpuBound = !isIObound;
     this->tau = 1.0/lambda;
 }
@@ -25,6 +26,7 @@ Process::Process(char process_name, int Arrival_time, const int Burst_number, co
 void Process::add_burst(int burst_time, int io_time){
     this->cpu_bursts[this->burst_number] = burst_time;
     this->io_bursts[this->burst_number] = io_time;
+    this->remain_cpu_bursts[this->burst_number] = burst_time;
     this->burst_number++;
 }
 
