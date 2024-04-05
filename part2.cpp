@@ -12,6 +12,7 @@
 #include "algorithms.h"
 #include "FCFS.h"
 #include "SJF.h"
+#include "SRT.h"
 using namespace std;
 
 int n, n_CPU, seed, t_cs, t_slice;
@@ -201,6 +202,8 @@ int main(int argc, char** argv)
     fcfs.Start();
     SJF sjf = SJF("SJF", processes, t_cs, alpha);
     sjf.Start();
+    SRT srt = SRT("SRT", processes, t_cs, alpha);
+    srt.Start();
     //free memory
     for(int i = 0; i < n; i++){
         processes[i].free_self();
