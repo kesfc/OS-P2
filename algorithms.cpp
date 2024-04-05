@@ -18,7 +18,7 @@ bool Algo::hasCommand(int time) {
 }
 
 bool Algo::checkPreempt(Process & process){
-    return this->contain_preemption;
+    return false;
 }
 
 void Algo::addCommand(Command command, int time) {
@@ -87,6 +87,7 @@ void Algo::Start() {
             //normal case
             newProcessRunCheck();
         }
+        processRunningProcess();
         this->currentTime++;
     }
     currentTime--;
@@ -109,9 +110,20 @@ bool Algo::allProcessCompleted() {
     return completed;
 }
 
+void Algo::processRunningProcess() {
+    if (runningProcess != nullptr) {
+        runningProcess->burst_time_left--;
+        if (runningProcess->burst_time_left == 0) {
+
+            Command c(currentTime + 1, 1, runningProcess);
+            addCommand(c, currentTime + 1);
+        }
+    }
+}
+
+//
 void Algo::ProcessArrival(Process& process) {
     this->readyQueue.push_back(&process);
-    cout << process.process_name << endl;
     cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
     //no running process, run
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess) {
@@ -129,9 +141,9 @@ void Algo::StartCpu(Process& process) {
     this->readyQueue.erase(this->readyQueue.begin());
     cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
     " started using the CPU for " << this->runningProcess->getCurrentBurst() << "ms burst [Q " << GetQueueString() << "]" << endl;
-    int endTime = this->currentTime + this->runningProcess->getCurrentBurst();
-    Command c(endTime, 1, &process);
-    addCommand(c, endTime);
+    this->runningProcess->burst_time_left = this->runningProcess->getCurrentBurst();
+    this->runningProcess->burst_start_time = currentTime;
+    
 }
 
 void Algo::FinishCpu(Process& process) {

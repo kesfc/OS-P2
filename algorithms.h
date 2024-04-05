@@ -96,6 +96,8 @@ public:
 
     bool allProcessCompleted();
 
+    void processRunningProcess();
+
     virtual void ProcessArrival(Process& process);
 
     virtual void StartCpu(Process& process);

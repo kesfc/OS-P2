@@ -200,10 +200,10 @@ int main(int argc, char** argv)
     std::cout << "<<< PROJECT PART II -- t_cs=" << t_cs << "ms; alpha=" << alpha << "; t_slice=" << t_slice << "ms >>>" << endl;
     FCFS fcfs = FCFS("FCFS", processes, t_cs);
     fcfs.Start();
-    SJF sjf = SJF("SJF", processes, t_cs, alpha);
-    sjf.Start();
-    SRT srt = SRT("SRT", processes, t_cs, alpha);
-    srt.Start();
+    //SJF sjf = SJF("SJF", processes, t_cs, alpha);
+    //sjf.Start();
+    //SRT srt = SRT("SRT", processes, t_cs, alpha);
+    //srt.Start();
     //free memory
     for(int i = 0; i < n; i++){
         processes[i].free_self();
