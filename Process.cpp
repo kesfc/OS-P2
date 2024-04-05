@@ -52,3 +52,7 @@ int Process::getCurrentBurst() {
 int Process::getCurrentIOBurst() {
     return io_bursts[burst_number - burst_remaining - 1];
 }
+
+void Process::onStart(int startTime){
+    this->burst_start_time = startTime;
+}

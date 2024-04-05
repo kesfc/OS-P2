@@ -5,7 +5,9 @@
 using namespace std;
 
 SRT::SRT(string name, vector<Process> processes, int t_cs, double alpha)
-    : Algo(name, processes, t_cs), alpha(alpha) {}  
+    : Algo(name, processes, t_cs), alpha(alpha) {
+        this->contain_preemption = true;
+}  
 
 void SRT::newProcessRunCheck(){
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {

@@ -72,6 +72,8 @@ public:
 
     // For SJF and SRT
     int alpha = 0;
+    // For algo that contain preemption
+    bool contain_preemption = false;
     //is context switching?
     bool isRemovingProcess = false;
     bool isLoadingProcess = false;
@@ -81,6 +83,8 @@ public:
     std::unordered_map<int, vector<Command>> commandBuffer;
 
     bool hasCommand(int time);
+
+    bool checkPreempt(Process & process);
 
     void addCommand(Command command, int time);
 
@@ -118,4 +122,3 @@ private:
     void setup();
 };
 #endif
-

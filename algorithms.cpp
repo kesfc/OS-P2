@@ -17,6 +17,10 @@ bool Algo::hasCommand(int time) {
     }
 }
 
+bool Algo::checkPreempt(Process & process){
+    return this->contain_preemption;
+}
+
 void Algo::addCommand(Command command, int time) {
     if (hasCommand(time)) {
         this->commandBuffer[time].push_back(command);
@@ -164,12 +168,33 @@ void Algo::TauRecalculated(Process& process){
 }
 
 void Algo::Preemption(Process& process){
+    // Theoretically only algo that uses preemption will have the chance to reach this function.
+    // putting the current running process to queue, and execute the param process.
+    this->runningProcess->burst_time_left = this->currentTime - this->runningProcess->burst_start_time;
+    this->readyQueue.push_back(this->runningProcess);
+
+    this->runningProcess = nullptr;
+    this->isRemovingProcess = true;
+    Command c(this->currentTime+this->t_cs / 2, 0, this->runningProcess);
+    this->addCommand(c, this->currentTime+this->t_cs / 2);
+
+    // TO DO: add the new process, also will need to delete the command that prints the preempted process finishing.
 
 }
 
 void Algo::FinishIO(Process& process) {
-    this->readyQueue.push_back(&process);
-    cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; added to ready queue [Q" << GetQueueString() << "]" << endl;
+    if(this->contain_preemption){
+        if(this->checkPreempt(process)){
+            cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " 
+            << this->runningProcess << "[Q" << this->GetQueueString() << "]" << endl;
+            this->Preemption(process);
+        }
+    } else {
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << 
+    " completed I/O; added to ready queue [Q" << this->GetQueueString() << "]" << endl;
+        this->readyQueue.push_back(&process);
+    }
+    
 }
 
 void Algo::LastCpuBurst(Process& process){
