@@ -132,11 +132,10 @@ void Algo::StartCpu(Process& process) {
 
 void Algo::FinishCpu(Process& process) {
     this->runningProcess->burst_remaining--;
-    cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) <<
-        " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
-    
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) <<
+        " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
         int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
             " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q" << GetQueueString() << "]" << endl;
@@ -151,7 +150,6 @@ void Algo::FinishCpu(Process& process) {
     }
     else {
         //last burst
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << " switching out of CPU." << endl;
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << " terminated [Q" << GetQueueString() << "]" << endl;
 
         this->runningProcess = nullptr;
