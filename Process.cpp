@@ -38,6 +38,7 @@ void Process::add_burst(int burst_time) {
 void Process::free_self(){
     delete[] cpu_bursts;
     delete[] io_bursts;
+    delete[] remain_cpu_bursts;
 }
 
 bool Process::isCompleted() {
