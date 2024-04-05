@@ -1,23 +1,14 @@
-#ifndef SRT_H  // Include guard to prevent multiple inclusions
+#ifndef SRT_H
 #define SRT_H
-
 #include <string>
 #include <vector>  
 #include "algorithms.h"
 #include "Process.h"
-using namespace std;
 
 class SRT : public Algo {
 public:
-    SRT(std::string name, vector<Process> processes, int t_cs, double alpha);
-    void ProcessArrival(Process& process) override;
-    void StartCpu(Process& process) override;
-    void FinishCpu(Process& process) override;
-    void FinishIO(Process& process) override;
+    SRT(std::string name, std::vector<Process> processes, int t_cs);
     void newProcessRunCheck() override;
-private:
-    double alpha;
+    string runningProcessName(Process & process) override;
 };
-
-
 #endif
