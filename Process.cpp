@@ -14,6 +14,7 @@ Process::Process(){
 Process::Process(char process_name, int Arrival_time, const int Burst_number, const int Burst_remaining, bool isIObound, double lambda){
     this->process_name = process_name;
     this->arrival_time = Arrival_time;
+    this->new_arrival_time = Arrival_time;
     this->burst_number = 0;
     this->burst_remaining = Burst_remaining;
     this->cpu_bursts = new int[Burst_number];

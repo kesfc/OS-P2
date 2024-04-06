@@ -69,6 +69,8 @@ public:
     int ioPreemption = 0;
     int cpuSwitchCount = 0;
     int ioSwitchCount = 0;
+    float cpuTurnAroundTime = 0;
+    float ioTurnAroundTime = 0;
     // For SJF and SRT
     int alpha = 0;
     // For algo that contain preemption
@@ -125,7 +127,7 @@ public:
 
     void printInfo(std::ofstream& file);
 
-    void RemovingPreemptedProcess(Process& process);
+    void RemovingPreemptedProcessDone(Process& process);
 
     void addPreemptedProcessToQ(Process& process);
 private:

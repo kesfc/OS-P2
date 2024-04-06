@@ -9,6 +9,7 @@ using namespace std;
 
 SJF::SJF(string name, vector<Process> processes, int t_cs, double alpha)
     : Algo(name, processes, t_cs), alpha(alpha) {}  
+
 void SJF::ProcessArrival(Process& process) {
     this->readyQueue.push_back(&process);
     cout << process.process_name << endl;

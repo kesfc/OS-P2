@@ -57,6 +57,7 @@ void SRT::FinishCpu(Process& process) {
     }
     else {
         //last burst
+        process.terminatedTime = currentTime;
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
         " terminated [Q" << GetQueueString() << "]" << endl;
     }

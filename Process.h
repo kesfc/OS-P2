@@ -15,11 +15,9 @@ class Process{
         int tau;
         int burst_time_left = -1;
         int burst_start_time = -1;
+        int new_arrival_time = 0;
 
-        int turnAroundTime = 0;
         int waitTime = 0;
-        int switchCount = 0;
-        int preemptionCount = 0;
 
         Process();
         Process(char process_name, int Arrival_time, const int Burst_number, const int Burst_remaining, bool isIObound, double lambda);

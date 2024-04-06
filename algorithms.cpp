@@ -41,7 +41,7 @@ void Algo::executeCommands(int time) {
         this->commandBuffer[time].erase(this->commandBuffer[time].begin());
         switch (c.type) {
             case -1:
-                RemovingPreemptedProcess(*c.process);
+                RemovingPreemptedProcessDone(*c.process);
             case 0:
                 SwitchingDone(*c.process);
                 break;
@@ -124,6 +124,7 @@ bool Algo::allProcessCompleted() {
 void Algo::processRunningProcess() {
     if (runningProcess != nullptr) {
         runningProcess->burst_time_left--;
+
         if (runningProcess->burst_time_left == 0) {
             Command c(currentTime + 1, 1, runningProcess);
             addCommand(c, currentTime + 1);
@@ -138,12 +139,12 @@ void Algo::addProcessToQ(Process& process) {
 
 void Algo::addPreemptedProcessToQ(Process& process) {
     this->readyQueue.insert(this->readyQueue.begin(), &process);
-    this->isRemovingProcess = false;
     return;
 }
 
 void Algo::ProcessArrival(Process& process) {
     this->addProcessToQ(process);
+
     cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
     //no running process, run
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess) {
@@ -162,11 +163,9 @@ void Algo::StartCpu(Process& process) {
     auto it = std::find_if(readyQueue.begin(), readyQueue.end(), [&process](Process* p) {
         return p == &process; // Compare addresses to find the matching process
         });
-
     if (it != readyQueue.end()) {
         readyQueue.erase(it); // Remove the process from readyQueue
     }
-
     //this->readyQueue.erase(this->readyQueue.begin());
     
     if (this->runningProcess->burst_time_left == -1){
@@ -182,6 +181,13 @@ void Algo::StartCpu(Process& process) {
 }
 
 void Algo::FinishCpu(Process& process) {
+    if (process.isCpuBound) {
+        this->cpuTurnAroundTime += this->t_cs / 2 + this->currentTime - runningProcess->new_arrival_time;
+    }
+    else {
+        this->ioTurnAroundTime += this->t_cs / 2 + this->currentTime - runningProcess->new_arrival_time;
+    }
+
     this->runningProcess->burst_remaining--;
     this->runningProcess->burst_time_left = -1;
     //if not terminated, start IO
@@ -203,6 +209,7 @@ void Algo::FinishCpu(Process& process) {
     else {
         //last burst
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << " terminated [Q " << GetQueueString() << "]" << endl;
+        process.terminatedTime = currentTime;
 
         this->runningProcess = nullptr;
         this->isRemovingProcess = true;
@@ -215,9 +222,8 @@ void Algo::TauRecalculated(Process& process){
 
 }
 
-void Algo::RemovingPreemptedProcess(Process& process) {
+void Algo::RemovingPreemptedProcessDone(Process& process) {
     this->addPreemptedProcessToQ(process);
-
     Command c1(this->currentTime, 0, &process);
     this->addCommand(c1, this->currentTime);
 }
@@ -246,6 +252,8 @@ void Algo::Preemption(Process& process){
 }
 
 void Algo::FinishIO(Process& process) {
+    process.new_arrival_time = currentTime;
+
     if(this->contain_preemption && this->checkPreempt(process)){
         
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " << this->runningProcess->process_name << " [Q";
@@ -263,11 +271,12 @@ void Algo::LastCpuBurst(Process& process){
 }
 
 void Algo::SwitchingDone(Process& process) {
-    if (process.isCpuBound)
-        this->cpuSwitchCount++;
-    else
-        this->ioSwitchCount++;
-
+    if (isRemovingProcess) {
+        if (process.isCpuBound)
+            this->cpuSwitchCount++;
+        else
+            this->ioSwitchCount++;
+    }
     this->isRemovingProcess = false;
 }
 
@@ -305,20 +314,17 @@ void Algo::printInfo(std::ofstream& file) {
     float ioBoundBurstCount = 0;
     float cpuWaitTime = 0;
     float ioWaitTime = 0;
-    float cpuTurnAroundTime = 0;
-    float ioTurnAroundTime = 0;
+    
 
     for (int i = 0; i < processes.size(); i++) {
         if (processes[i].isCpuBound) {
             cpuBoundedProcessCount++;
             cpuWaitTime += processes[i].waitTime;
-            cpuTurnAroundTime += processes[i].turnAroundTime;
             cpuBoundBurstCount += processes[i].burst_number;
         }
         else {
             ioBoundedProcessCount++;
             ioWaitTime += processes[i].waitTime;
-            ioTurnAroundTime += processes[i].turnAroundTime;
             ioBoundBurstCount += processes[i].burst_number;
         }
 
@@ -340,14 +346,12 @@ void Algo::printInfo(std::ofstream& file) {
 
 
     float avgWaitTime = std::ceil((cpuWaitTime + ioWaitTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0) / 1000.0f;
-    cpuWaitTime = std::ceil(cpuWaitTime / cpuBoundBurstCount * 1000.0) / 1000.0f;
-    ioWaitTime = std::ceil(ioWaitTime / ioBoundBurstCount * 1000.0) / 1000.0f;
+    cpuWaitTime = std::ceil((cpuWaitTime - t_cs / 2) / cpuBoundBurstCount * 1000.0) / 1000.0f;
+    ioWaitTime = std::ceil((ioWaitTime - t_cs/2) / ioBoundBurstCount * 1000.0) / 1000.0f;
 
-    cpuTurnAroundTime = cpuBurstTime_cpu + cpuWaitTime;
-    ioTurnAroundTime = cpuBurstTime_io + ioWaitTime;
-    float avgTurnAroundTime = std::ceil((cpuTurnAroundTime + ioTurnAroundTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0) / 1000.0f;
-    cpuTurnAroundTime = std::ceil(cpuTurnAroundTime / cpuBoundedProcessCount * 1000.0) / 1000.0f;
-    ioTurnAroundTime = std::ceil(ioTurnAroundTime / ioBoundedProcessCount * 1000.0) / 1000.0f;
+    float avgTurnAroundTime = std::ceil((cpuTurnAroundTime + ioTurnAroundTime) / processes.size() * 1000.0) / 1000.0f;
+    cpuTurnAroundTime = std::ceil(cpuTurnAroundTime/ cpuBoundBurstCount * 1000.0) / 1000.0f;
+    ioTurnAroundTime = std::ceil(ioTurnAroundTime/ ioBoundBurstCount * 1000.0) / 1000.0f;
 
     file << std::fixed << std::setprecision(3);
     file << "-- CPU utilization: " << cpuUtilization << "%" << endl
@@ -356,6 +360,6 @@ void Algo::printInfo(std::ofstream& file) {
         << "-- average turnaround time: " << avgTurnAroundTime << " ms (" << cpuTurnAroundTime << " ms/" << ioTurnAroundTime << " ms)" << endl;
     file << std::fixed << std::setprecision(0);
     file << "-- number of context switches: " << (this->cpuSwitchCount + this->ioSwitchCount) << " (" << this->cpuSwitchCount << "/" << this->ioSwitchCount << ")" << endl
-        << "-- number of preemptions: " << (this->cpuPreemption + this->ioPreemption) / processes.size() << " (" << this->cpuPreemption << "/" << this->ioPreemption << ")" << endl;
+        << "-- number of preemptions: " << (this->cpuPreemption + this->ioPreemption) << " (" << this->cpuPreemption << "/" << this->ioPreemption << ")" << endl;
 
 }
