@@ -15,7 +15,7 @@ public:
     void addProcessToQ(Process& process) override;
 
 private:
-    double alpha;
+    float alpha;
 };
 
 bool compareProcess(Process* a, Process* b);

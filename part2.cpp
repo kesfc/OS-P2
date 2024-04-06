@@ -162,7 +162,7 @@ int main(int argc, char** argv)
     outFile.open("simout.txt");
 
     FCFS fcfs = FCFS("FCFS", processes, t_cs);
-    //fcfs.Start();
+    fcfs.Start();
     
     SJF sjf = SJF("SJF", processes, t_cs, alpha);
     //sjf.Start();

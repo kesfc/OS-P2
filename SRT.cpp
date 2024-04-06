@@ -14,9 +14,13 @@ void SRT::newProcessRunCheck(){
         sort(this->readyQueue.begin(), this->readyQueue.end(), compareProcess);
         this->isLoadingProcess = true;
         Process* p = this->readyQueue.front();
-        //cout << p->process_name << " will run on " << this->currentTime + this->t_cs / 2 << endl;
+        // cout << this->currentTime << " " << p->process_name << " will run on " << this->currentTime + this->t_cs / 2 << endl;
         Command c(this->currentTime + this->t_cs / 2, 2, p);
         addCommand(c, this->currentTime + this->t_cs / 2);
+
+        // After letting the process start it shoudl be removed from the queue immediately.
+        // cout << "want to remove " << this->readyQueue.front()->process_name << endl;
+        this->readyQueue.erase(this->readyQueue.begin());
     }
 }
 
@@ -27,14 +31,15 @@ string SRT::runningProcessName(Process & process){
 }
 
 void SRT::FinishCpu(Process& process) {
-    double temp = this->alpha * this->runningProcess->getCurrentBurst() + (1 - this->alpha) * process.tau;
+    double temp = this->alpha * this->runningProcess->getCurrentBurst() + (1.0 - this->alpha) * process.tau;
     int Newtau = std::ceil(temp);
     this->runningProcess->burst_remaining--;
     this->runningProcess->burst_time_left = -1;
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) <<
-        " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
+        " completed a CPU burst; " << this->runningProcess->burst_remaining << " burst" << (this->runningProcess->burst_remaining > 1 ? "s" : "")
+        << " to go [Q" << GetQueueString() << "]" << endl;
 
         cout << "time "<< this->currentTime <<"ms: Recalculating tau for process "<< this->runningProcess->process_name << ": old tau "<< 
         this-> runningProcess -> tau<<"ms ==> new tau "<< Newtau<<"ms [Q"<< GetQueueString() << "]"<<endl;
@@ -50,7 +55,7 @@ void SRT::FinishCpu(Process& process) {
     else {
         //last burst
         process.terminatedTime = currentTime;
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
         " terminated [Q" << GetQueueString() << "]" << endl;
     }
     //context switching

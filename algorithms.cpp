@@ -92,10 +92,12 @@ void Algo::Start() {
         //corner case
         newProcessRunCheck();
         while (hasCommand(this->currentTime)) {
-            
-            executeCommands(this->currentTime);
+            while (hasCommand(this->currentTime)){
+                executeCommands(this->currentTime);
+            }
             //normal case
             newProcessRunCheck();
+            // cout << "Checked for running process... " << this->isLoadingProcess << " " << this->isRemovingProcess << endl;
         }
         processRunningProcess();
         updateWaitTime();
@@ -113,7 +115,6 @@ bool Algo::allProcessCompleted() {
     bool completed = true;
     for (int i = 0; i < this->processes.size(); i++) {
         if (!this->processes[i].isCompleted()) {
-            //if (currentTime >= 324062 && currentTime <= 324063)cout << "Debug:"<<processes[i].process_name << processes[i].burst_remaining << endl;
             completed = false;
             break;
         }
@@ -164,11 +165,12 @@ void Algo::StartCpu(Process& process) {
         return p == &process; // Compare addresses to find the matching process
         });
     if (it != readyQueue.end()) {
+        // This means that it is a preemption case.
+        // cout << "erasing.. " << (*it)->process_name << endl;
         readyQueue.erase(it); // Remove the process from readyQueue
     }
-    //this->readyQueue.erase(this->readyQueue.begin());
     
-    if (this->runningProcess->burst_time_left == -1){
+    if (this->runningProcess->burst_time_left == -1 || this->runningProcess->burst_time_left == this->runningProcess->getCurrentBurst()){
         this->runningProcess->burst_time_left = this->runningProcess->getCurrentBurst();
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
     " started using the CPU for " << this->runningProcess->getCurrentBurst() << "ms burst [Q" << GetQueueString() << "]" << endl;
@@ -178,6 +180,16 @@ void Algo::StartCpu(Process& process) {
     << this->runningProcess->getCurrentBurst() << "ms burst [Q" << GetQueueString() << "]" << endl;
     }
     this->runningProcess->burst_start_time = currentTime;
+
+    if (this->contain_preemption && this->checkPreempt(*this->readyQueue.front())){
+        Process* p = this->readyQueue.front();
+
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*p) << " will preempt " << 
+        this->runningProcess->process_name << " [Q" << this->GetQueueString() << "]" << endl;
+        
+        this->readyQueue.erase(this->readyQueue.begin());
+        this->Preemption(*p);
+    }
 }
 
 void Algo::FinishCpu(Process& process) {
@@ -245,17 +257,16 @@ void Algo::Preemption(Process& process){
 
     this->runningProcess = nullptr;
     this->isRemovingProcess = true;
-    this->isLoadingProcess = true;
+    // this->isLoadingProcess = true;
 
-    Command c1(this->currentTime+this->t_cs, 2, &process);
-    this->addCommand(c1, this->currentTime+this->t_cs);
+    // Command c1(this->currentTime+this->t_cs, 2, &process);
+    // this->addCommand(c1, this->currentTime+this->t_cs);
 }
 
 void Algo::FinishIO(Process& process) {
     process.new_arrival_time = currentTime;
 
     if(this->contain_preemption && this->checkPreempt(process)){
-        
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " << this->runningProcess->process_name << " [Q";
         this->Preemption(process);
         cout<< this->GetQueueString() << "]" << endl;
