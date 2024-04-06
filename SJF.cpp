@@ -12,6 +12,9 @@ SJF::SJF(string name, vector<Process> processes, int t_cs, double alpha)
 
 void SJF::ProcessArrival(Process& process) {
     this->readyQueue.push_back(&process);
+    sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
+            return a->tau < b->tau || (a->tau == b->tau && a->process_name < b->process_name);
+        });
     cout << "time " << this->currentTime << "ms: Process " << process.process_name << " (tau " << process.tau<< "ms) arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
     //no running process, run
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess) {
@@ -35,8 +38,7 @@ void SJF::StartCpu(Process& process) {
 }
 
 void SJF::FinishCpu(Process& process) {
-    double temp = this->alpha * this->runningProcess->getCurrentBurst() + (1 - this->alpha) * process.tau;
-    int Newtau = std::ceil(temp);
+    int Newtau = ceil(this->alpha * this->runningProcess->getCurrentBurst() + (1.0 - this->alpha) * process.tau);
     this->runningProcess->burst_remaining--;
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
@@ -68,7 +70,7 @@ void SJF::FinishCpu(Process& process) {
 void SJF::FinishIO(Process& process) {
     this->readyQueue.push_back(&process);
     sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
-            return a->tau < b->tau;
+            return a->tau < b->tau || (a->tau == b->tau && a->process_name < b->process_name);
         });
     cout << "time " << this->currentTime << "ms: Process " << process.process_name << " (tau " << process.tau<< "ms)" << " completed I/O; added to ready queue [Q" << GetQueueString() << "]" << endl;
 }
@@ -76,7 +78,7 @@ void SJF::FinishIO(Process& process) {
 void SJF::newProcessRunCheck() {
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {
         sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
-            return a->tau < b->tau;
+            return a->tau < b->tau || (a->tau == b->tau && a->process_name < b->process_name);
         });
         this->isLoadingProcess = true;
         Process* p = this->readyQueue.front();

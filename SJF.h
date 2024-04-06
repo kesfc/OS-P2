@@ -16,7 +16,7 @@ public:
     void FinishIO(Process& process) override;
     void newProcessRunCheck() override;
 private:
-    double alpha;
+    float alpha;
 };
 
 
