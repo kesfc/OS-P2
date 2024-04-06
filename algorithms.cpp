@@ -238,7 +238,7 @@ void Algo::Preemption(Process& process){
         this->ioPreemption++;
     }
     
-    addProcessToQ(process);
+    this->addProcessToQ(process);
 
     Command c0(this->currentTime + this->t_cs / 2, -1, this->runningProcess);
     this->addCommand(c0, this->currentTime + this->t_cs / 2);
@@ -260,7 +260,7 @@ void Algo::FinishIO(Process& process) {
         this->Preemption(process);
         cout<< this->GetQueueString() << "]" << endl;
     } else {
-        this->readyQueue.push_back(&process);
+        this->addProcessToQ(process);
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << 
     " completed I/O; added to ready queue [Q" << this->GetQueueString() << "]" << endl;
     }

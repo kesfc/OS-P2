@@ -18,4 +18,5 @@ private:
     double alpha;
 };
 
+bool compareProcess(Process* a, Process* b);
 #endif

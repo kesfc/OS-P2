@@ -11,15 +11,7 @@ SRT::SRT(string name, vector<Process> processes, int t_cs, double alpha)
 
 void SRT::newProcessRunCheck(){
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {
-        sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
-            if (a->tau < b->tau){
-                return true;
-            } else if (a->tau == b->tau){
-                return a->process_name < b->process_name;
-            } else{
-                return false;
-            }
-        });
+        sort(this->readyQueue.begin(), this->readyQueue.end(), compareProcess);
         this->isLoadingProcess = true;
         Process* p = this->readyQueue.front();
         //cout << p->process_name << " will run on " << this->currentTime + this->t_cs / 2 << endl;
@@ -41,7 +33,7 @@ void SRT::FinishCpu(Process& process) {
     this->runningProcess->burst_time_left = -1;
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) <<" " << this->runningProcess->process_name <<
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) <<
         " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
 
         cout << "time "<< this->currentTime <<"ms: Recalculating tau for process "<< this->runningProcess->process_name << ": old tau "<< 
@@ -78,13 +70,17 @@ bool SRT::checkPreempt(Process &process){
 
 void SRT::addProcessToQ(Process& process){
     this->readyQueue.push_back(&process);
-    sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
-        if (a->tau < b->tau){
-            return true;
-        } else if (a->tau == b->tau){
-            return a->process_name < b->process_name;
-        } else{
-            return false;
-        }
-    });
+    sort(this->readyQueue.begin(), this->readyQueue.end(), compareProcess);
+}
+
+bool compareProcess(Process* a, Process* b){
+    int remain_time_a = a->burst_time_left==-1 ? a->tau : a->tau - (a->getCurrentBurst() - a->burst_time_left);
+    int remain_time_b = b->burst_time_left==-1 ? b->tau : b->tau - (b->getCurrentBurst() - b->burst_time_left);
+    if (remain_time_a < remain_time_b){
+        return true;
+    } else if (remain_time_a == remain_time_b){
+        return a->process_name < b->process_name;
+    } else{
+        return false;
+    }
 }
