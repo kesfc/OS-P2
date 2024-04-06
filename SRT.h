@@ -11,6 +11,7 @@ public:
     void newProcessRunCheck() override;
     string runningProcessName(Process & process) override;
     void FinishCpu(Process& process) override;
+    bool checkPreempt(Process & process) override; 
 
 private:
     double alpha;

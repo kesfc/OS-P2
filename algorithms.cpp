@@ -98,7 +98,6 @@ bool Algo::allProcessCompleted() {
     if (this->processes.size() == 0) {
         EXIT_FAILURE;
     }
-
     bool completed = true;
     for (int i = 0; i < this->processes.size(); i++) {
         if (!this->processes[i].isCompleted()) {
@@ -143,7 +142,6 @@ void Algo::StartCpu(Process& process) {
     " started using the CPU for " << this->runningProcess->getCurrentBurst() << "ms burst [Q " << GetQueueString() << "]" << endl;
     this->runningProcess->burst_time_left = this->runningProcess->getCurrentBurst();
     this->runningProcess->burst_start_time = currentTime;
-    
 }
 
 void Algo::FinishCpu(Process& process) {
@@ -151,7 +149,7 @@ void Algo::FinishCpu(Process& process) {
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) <<
-        " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
+        " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q " << GetQueueString() << "]" << endl;
         int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
             " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q" << GetQueueString() << "]" << endl;
@@ -166,7 +164,7 @@ void Algo::FinishCpu(Process& process) {
     }
     else {
         //last burst
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << " terminated [Q" << GetQueueString() << "]" << endl;
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << " terminated [Q " << GetQueueString() << "]" << endl;
 
         this->runningProcess = nullptr;
         this->isRemovingProcess = true;
@@ -182,7 +180,6 @@ void Algo::TauRecalculated(Process& process){
 void Algo::Preemption(Process& process){
     // Theoretically only algo that uses preemption will have the chance to reach this function.
     // putting the current running process to queue, and execute the param process.
-    this->runningProcess->burst_time_left = this->currentTime - this->runningProcess->burst_start_time;
     this->readyQueue.push_back(this->runningProcess);
 
     this->runningProcess = nullptr;
@@ -190,23 +187,22 @@ void Algo::Preemption(Process& process){
     Command c(this->currentTime+this->t_cs / 2, 0, this->runningProcess);
     this->addCommand(c, this->currentTime+this->t_cs / 2);
 
-    // TO DO: add the new process, also will need to delete the command that prints the preempted process finishing.
-
+    this->readyQueue.insert(this->readyQueue.begin(), &process);
+    Command c2(this->currentTime+this->t_cs, 2, &process);
+    this->addCommand(c2, this->currentTime+this->t_cs);
 }
 
 void Algo::FinishIO(Process& process) {
-    if(this->contain_preemption){
-        if(this->checkPreempt(process)){
-            cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " 
-            << this->runningProcess << "[Q" << this->GetQueueString() << "]" << endl;
-            this->Preemption(process);
-        }
+    if(this->contain_preemption && this->checkPreempt(process)){
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " 
+        << this->runningProcess->process_name << "[Q" << this->GetQueueString() << "]" << endl;
+        this->Preemption(process);
     } else {
+        this->readyQueue.push_back(&process);
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << 
     " completed I/O; added to ready queue [Q" << this->GetQueueString() << "]" << endl;
-        this->readyQueue.push_back(&process);
+        
     }
-    
 }
 
 void Algo::LastCpuBurst(Process& process){
@@ -220,7 +216,7 @@ void Algo::SwitchingDone() {
 string Algo::GetQueueString() {
     string queueString = "";
     if (this->readyQueue.empty()) {
-        queueString = " <empty>";
+        queueString = "<empty>";
     }
     else
     {

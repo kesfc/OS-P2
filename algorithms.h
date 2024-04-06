@@ -84,7 +84,7 @@ public:
 
     bool hasCommand(int time);
 
-    bool checkPreempt(Process & process);
+    virtual bool checkPreempt(Process & process);
 
     void addCommand(Command command, int time);
 

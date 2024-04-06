@@ -23,7 +23,7 @@ void SRT::newProcessRunCheck(){
 
 string SRT::runningProcessName(Process & process){
     string name(1, process.process_name);
-    name = name + " (tau " + to_string(process.tau) + "ms) ";
+    name = name + " (tau " + to_string(process.tau) + "ms)";
     return name;
 }
 
@@ -35,12 +35,15 @@ void SRT::FinishCpu(Process& process) {
     if (this->runningProcess->burst_remaining > 0) {
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << this->runningProcess->process_name <<
         " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
-        int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
-            " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q" << GetQueueString() << "]" << endl;
+
         cout << "time "<< this->currentTime <<"ms: Recalculating tau for process "<< this->runningProcess->process_name << ": old tau "<< 
         this-> runningProcess -> tau<<"ms ==> new tau "<< Newtau<<"ms [Q"<< GetQueueString() << "]"<<endl;
         this->runningProcess->tau = Newtau;
+
+        int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
+            " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q " << GetQueueString() << "]" << endl;
+
         Command c(endTime, 3, this->runningProcess);
         addCommand(c, endTime);
     }
@@ -54,4 +57,12 @@ void SRT::FinishCpu(Process& process) {
     this->isRemovingProcess = true;
     Command c2(this->currentTime + this->t_cs / 2, 0, &process);
     addCommand(c2, this->currentTime + this->t_cs / 2);
+}
+
+bool SRT::checkPreempt(Process &process){
+    if (this->runningProcess != nullptr){
+        // return process.tau < this->runningProcess->tau;
+        return process.tau < this->runningProcess->tau - this->currentTime - (this->runningProcess->burst_start_time);
+    }
+    return false;
 }
