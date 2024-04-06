@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 using namespace std;
 
 /// <summary>
@@ -98,6 +99,8 @@ public:
 
     void processRunningProcess();
 
+    virtual void addProcessToQ(Process& process);
+
     virtual void ProcessArrival(Process& process);
 
     virtual void StartCpu(Process& process);
@@ -120,6 +123,7 @@ public:
 
     virtual void newProcessRunCheck() = 0;
 
+    void printInfo(std::ofstream& file);
 private:
     void setup();
 };

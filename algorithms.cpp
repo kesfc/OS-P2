@@ -1,5 +1,6 @@
 #include "algorithms.h"
 #include "Process.h"
+#include <fstream>
 #include <string>
 #include <vector>
 #include <queue>
@@ -120,9 +121,13 @@ void Algo::processRunningProcess() {
     }
 }
 
-//
-void Algo::ProcessArrival(Process& process) {
+void Algo::addProcessToQ(Process& process) {
     this->readyQueue.push_back(&process);
+    return;
+}
+
+void Algo::ProcessArrival(Process& process) {
+    this->addProcessToQ(process);
     cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
     //no running process, run
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess) {
@@ -235,4 +240,11 @@ bool Algo::compareCommand(Command a, Command b) {
     }
     else
         return a.type < b.type;
+}
+
+void Algo::printInfo(std::ofstream& file) {
+    file << "Algorithm "<< name <<endl;
+    file << "-- CPU utilization: "<< 123<< "%" << endl<<
+        << "-- average CPU burst time: "<< 123<< " ms ("<<123 << 123<<" ms/"<< 123<<" ms)";
+
 }
