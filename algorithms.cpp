@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <iostream>
+#include <cmath> 
 using namespace std;
 
 bool Algo::hasCommand(int time) {
@@ -39,8 +40,10 @@ void Algo::executeCommands(int time) {
         //pop first command
         this->commandBuffer[time].erase(this->commandBuffer[time].begin());
         switch (c.type) {
+            case -1:
+                RemovingPreemptedProcess(*c.process);
             case 0:
-                SwitchingDone();
+                SwitchingDone(*c.process);
                 break;
             case 1:
                 FinishCpu(*c.process);
@@ -69,6 +72,11 @@ void Algo::setup() {
     isLoadingProcess = false;
 }
 
+void Algo::updateWaitTime() {
+    for (Process* processPtr : readyQueue) {
+        processPtr->waitTime++;
+    }
+}
 
 void Algo::Start() {
     setup();
@@ -84,14 +92,17 @@ void Algo::Start() {
         //corner case
         newProcessRunCheck();
         while (hasCommand(this->currentTime)) {
+            
             executeCommands(this->currentTime);
             //normal case
             newProcessRunCheck();
         }
         processRunningProcess();
+        updateWaitTime();
         this->currentTime++;
     }
     currentTime--;
+    this->endTime = currentTime;
     cout << "time " << this->currentTime << "ms: Simulator ended for " << this->name << " [Q" << GetQueueString() << "]" << endl;
 }
 
@@ -125,6 +136,12 @@ void Algo::addProcessToQ(Process& process) {
     return;
 }
 
+void Algo::addPreemptedProcessToQ(Process& process) {
+    this->readyQueue.insert(this->readyQueue.begin(), &process);
+    this->isRemovingProcess = false;
+    return;
+}
+
 void Algo::ProcessArrival(Process& process) {
     this->addProcessToQ(process);
     cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
@@ -141,16 +158,25 @@ void Algo::StartCpu(Process& process) {
     this->isLoadingProcess = false;
     this->isRemovingProcess = false;
     this->runningProcess = &process;
-    this->readyQueue.erase(this->readyQueue.begin());
+    //remove
+    auto it = std::find_if(readyQueue.begin(), readyQueue.end(), [&process](Process* p) {
+        return p == &process; // Compare addresses to find the matching process
+        });
+
+    if (it != readyQueue.end()) {
+        readyQueue.erase(it); // Remove the process from readyQueue
+    }
+
+    //this->readyQueue.erase(this->readyQueue.begin());
     
     if (this->runningProcess->burst_time_left == -1){
         this->runningProcess->burst_time_left = this->runningProcess->getCurrentBurst();
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
-    " started using the CPU for " << this->runningProcess->getCurrentBurst() << "ms burst [Q " << GetQueueString() << "]" << endl;
+    " started using the CPU for " << this->runningProcess->getCurrentBurst() << "ms burst [Q" << GetQueueString() << "]" << endl;
     } else {
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
     " started using the CPU for remaining " << this->runningProcess->burst_time_left << "ms of " 
-    << this->runningProcess->getCurrentBurst() << "ms burst [Q " << GetQueueString() << "]" << endl;
+    << this->runningProcess->getCurrentBurst() << "ms burst [Q" << GetQueueString() << "]" << endl;
     }
     this->runningProcess->burst_start_time = currentTime;
 }
@@ -189,30 +215,42 @@ void Algo::TauRecalculated(Process& process){
 
 }
 
+void Algo::RemovingPreemptedProcess(Process& process) {
+    this->addPreemptedProcessToQ(process);
+
+    Command c1(this->currentTime, 0, &process);
+    this->addCommand(c1, this->currentTime);
+}
+
 void Algo::Preemption(Process& process){
     // Theoretically only algo that uses preemption will have the chance to reach this function.
     // putting the current running process to queue, and execute the param process.
-    this->addProcessToQ(*this->runningProcess);
+    if (process.isCpuBound) {
+        this->cpuPreemption++;
+    }
+    else {
+        this->ioPreemption++;
+    }
+    
+    addProcessToQ(process);
+
+    Command c0(this->currentTime + this->t_cs / 2, -1, this->runningProcess);
+    this->addCommand(c0, this->currentTime + this->t_cs / 2);
 
     this->runningProcess = nullptr;
     this->isRemovingProcess = true;
     this->isLoadingProcess = true;
 
-    Command c(this->currentTime+this->t_cs / 2, 0, this->runningProcess);
-    this->addCommand(c, this->currentTime+this->t_cs / 2);
-
-    this->readyQueue.insert(this->readyQueue.begin(), &process);
-    Command c2(this->currentTime+this->t_cs, 2, &process);
-    this->addCommand(c2, this->currentTime+this->t_cs);
-
-    //cout << "process " << process.process_name << " will execute at " << this->currentTime+this->t_cs << endl;
+    Command c1(this->currentTime+this->t_cs, 2, &process);
+    this->addCommand(c1, this->currentTime+this->t_cs);
 }
 
 void Algo::FinishIO(Process& process) {
     if(this->contain_preemption && this->checkPreempt(process)){
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " 
-        << this->runningProcess->process_name << " [Q" << this->GetQueueString() << "]" << endl;
+        
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " << this->runningProcess->process_name << " [Q";
         this->Preemption(process);
+        cout<< this->GetQueueString() << "]" << endl;
     } else {
         this->readyQueue.push_back(&process);
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << 
@@ -224,14 +262,19 @@ void Algo::LastCpuBurst(Process& process){
 
 }
 
-void Algo::SwitchingDone() {
+void Algo::SwitchingDone(Process& process) {
+    if (process.isCpuBound)
+        this->cpuSwitchCount++;
+    else
+        this->ioSwitchCount++;
+
     this->isRemovingProcess = false;
 }
 
 string Algo::GetQueueString() {
     string queueString = "";
     if (this->readyQueue.empty()) {
-        queueString = "<empty>";
+        queueString = " <empty>";
     }
     else
     {
@@ -243,7 +286,6 @@ string Algo::GetQueueString() {
     return queueString;
 }
 
-
 bool Algo::compareCommand(Command a, Command b) {
     if (a.type == b.type) {
         return a.process->process_name < b.process->process_name;
@@ -253,8 +295,67 @@ bool Algo::compareCommand(Command a, Command b) {
 }
 
 void Algo::printInfo(std::ofstream& file) {
-    file << "Algorithm "<< name <<endl;
-    file << "-- CPU utilization: "<< 123<< "%" << endl
-        << "-- average CPU burst time: "<< 123<< " ms ("<<123 << 123<<" ms/"<< 123<<" ms)";
+    file << "Algorithm " << name << endl;
+
+    float cpuBurstTime_io = 0;
+    float cpuBurstTime_cpu = 0;
+    float cpuBoundedProcessCount = 0;
+    float ioBoundedProcessCount = 0;
+    float cpuBoundBurstCount = 0;
+    float ioBoundBurstCount = 0;
+    float cpuWaitTime = 0;
+    float ioWaitTime = 0;
+    float cpuTurnAroundTime = 0;
+    float ioTurnAroundTime = 0;
+
+    for (int i = 0; i < processes.size(); i++) {
+        if (processes[i].isCpuBound) {
+            cpuBoundedProcessCount++;
+            cpuWaitTime += processes[i].waitTime;
+            cpuTurnAroundTime += processes[i].turnAroundTime;
+            cpuBoundBurstCount += processes[i].burst_number;
+        }
+        else {
+            ioBoundedProcessCount++;
+            ioWaitTime += processes[i].waitTime;
+            ioTurnAroundTime += processes[i].turnAroundTime;
+            ioBoundBurstCount += processes[i].burst_number;
+        }
+
+        for (int j = 0; j < processes[i].burst_number; j++) {
+            if (processes[i].isCpuBound) {
+                cpuBurstTime_cpu += processes[i].cpu_bursts[j];
+            }
+            else {
+                cpuBurstTime_io += processes[i].cpu_bursts[j];
+            }
+        }
+    }
+
+    float cpuUtilization = std::ceil((cpuBurstTime_cpu + cpuBurstTime_io) / this->endTime * 1000 * 100) / 1000.0f;
+
+    float avgCpuBurstTime = std::ceil((cpuBurstTime_cpu + cpuBurstTime_io) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0) / 1000.0f;
+    cpuBurstTime_cpu = std::ceil(cpuBurstTime_cpu / (cpuBoundBurstCount) * 1000.0) / 1000.0f;
+    cpuBurstTime_io = std::ceil(cpuBurstTime_io / (ioBoundBurstCount) * 1000.0) / 1000.0f;
+
+
+    float avgWaitTime = std::ceil((cpuWaitTime + ioWaitTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0) / 1000.0f;
+    cpuWaitTime = std::ceil(cpuWaitTime / cpuBoundBurstCount * 1000.0) / 1000.0f;
+    ioWaitTime = std::ceil(ioWaitTime / ioBoundBurstCount * 1000.0) / 1000.0f;
+
+    cpuTurnAroundTime = cpuBurstTime_cpu + cpuWaitTime;
+    ioTurnAroundTime = cpuBurstTime_io + ioWaitTime;
+    float avgTurnAroundTime = std::ceil((cpuTurnAroundTime + ioTurnAroundTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0) / 1000.0f;
+    cpuTurnAroundTime = std::ceil(cpuTurnAroundTime / cpuBoundedProcessCount * 1000.0) / 1000.0f;
+    ioTurnAroundTime = std::ceil(ioTurnAroundTime / ioBoundedProcessCount * 1000.0) / 1000.0f;
+
+    file << std::fixed << std::setprecision(3);
+    file << "-- CPU utilization: " << cpuUtilization << "%" << endl
+        << "-- average CPU burst time: " << avgCpuBurstTime << " ms (" << cpuBurstTime_cpu << " ms/" << cpuBurstTime_io << " ms)" << endl
+        << "-- average wait time: " << avgWaitTime << " ms (" << cpuWaitTime << " ms/" << ioWaitTime << " ms)" << endl
+        << "-- average turnaround time: " << avgTurnAroundTime << " ms (" << cpuTurnAroundTime << " ms/" << ioTurnAroundTime << " ms)" << endl;
+    file << std::fixed << std::setprecision(0);
+    file << "-- number of context switches: " << (this->cpuSwitchCount + this->ioSwitchCount) << " (" << this->cpuSwitchCount << "/" << this->ioSwitchCount << ")" << endl
+        << "-- number of preemptions: " << (this->cpuPreemption + this->ioPreemption) / processes.size() << " (" << this->cpuPreemption << "/" << this->ioPreemption << ")" << endl;
 
 }

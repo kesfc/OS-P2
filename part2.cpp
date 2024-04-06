@@ -56,48 +56,6 @@ int IO_burst_time(){
     return ceil(next_exp());
 }
 
-//output info to txt
-void OutputSimout(Algo &currentAlgo) {
-    //average(123 needs calculation)
-    float cpuUtilization = 123;
-    float cpuBurstTime = 123;
-    float waitTime = 123;
-    float turnAroundTime = 123;
-    int switches = currentAlgo.numOfSwitch_cpu + currentAlgo.numOfSwitch_io;
-    int preemptions = currentAlgo.numOfPreemption_cpu + currentAlgo.numOfPreemption_io;
-
-    cpuUtilization = std::ceil(cpuUtilization * 1000) / 1000;
-    waitTime = std::ceil(waitTime * 1000) / 1000;
-    //...
-
-    //start output
-    //outputFile << "Algorithm " << currentAlgo.name << endl;
-    //// Set the precision and format of the output stream
-    //std::cout << std::fixed << std::setprecision(3);
-
-    //std::string result = std::format("-- CPU utilization: {0}%", cpuUtilization);
-    //std::cout << result << std::endl;
-
-    //result = std::format("-- average CPU burst time: {0} ms ({1} ms/{2} ms)", cpuBurstTime, cpuBurstTime_cpu, cpuBurstTime_io);
-    //std::cout << result << std::endl;
-
-    //result = std::format("-- average wait time: {0} ms ({1} ms/{2} ms)",);
-    //std::cout << result << std::endl;
-
-    //result = std::format("-- average turnaround time: {0} ms ({1} ms/{2} ms)", );
-    //std::cout << result << std::endl;
-
-    //// Set the precision and format of the output stream
-    //std::cout << std::fixed << std::setprecision(0);
-
-    //result = std::format("-- number of context switches: {0} ({1}/{2})", );
-    //std::cout << result << std::endl;
-
-    //result = std::format("-- number of preemptions: {0} ({1}/{2})", );
-    //std::cout << result << std::endl;
-
-}
-
 Process process_progress(int is_IO_bound, int process_code){
     double arrival_time = next_arrival_time();
     int Burst_number = number_burst();
@@ -204,12 +162,21 @@ int main(int argc, char** argv)
     outFile.open("simout.txt");
 
     FCFS fcfs = FCFS("FCFS", processes, t_cs);
-    // fcfs.Start();
-    // fcfs.printInfo(outFile);
-    //SJF sjf = SJF("SJF", processes, t_cs, alpha);
+    //fcfs.Start();
+    
+    SJF sjf = SJF("SJF", processes, t_cs, alpha);
     //sjf.Start();
+
     SRT srt = SRT("SRT", processes, t_cs, alpha);
     srt.Start();
+
+    //fcfs.printInfo(outFile);
+    outFile << endl;
+    //sjf.printInfo(outFile);
+    outFile << endl;
+    srt.printInfo(outFile);
+    outFile << endl;
+    //rr.printInfo(outFile);
     //free memory
     for(int i = 0; i < n; i++){
         processes[i].free_self();

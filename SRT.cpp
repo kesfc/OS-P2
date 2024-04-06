@@ -11,7 +11,6 @@ SRT::SRT(string name, vector<Process> processes, int t_cs, double alpha)
 
 void SRT::newProcessRunCheck(){
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {
-        if (this->currentTime + this->t_cs / 2 == 29977) { cout << this->isLoadingProcess << endl; }
         sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
             if (a->tau < b->tau){
                 return true;
@@ -42,7 +41,7 @@ void SRT::FinishCpu(Process& process) {
     this->runningProcess->burst_time_left = -1;
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << this->runningProcess->process_name <<
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) <<" " << this->runningProcess->process_name <<
         " completed a CPU burst; " << this->runningProcess->burst_remaining << " bursts to go [Q" << GetQueueString() << "]" << endl;
 
         cout << "time "<< this->currentTime <<"ms: Recalculating tau for process "<< this->runningProcess->process_name << ": old tau "<< 
@@ -51,7 +50,7 @@ void SRT::FinishCpu(Process& process) {
 
         int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
-            " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q " << GetQueueString() << "]" << endl;
+            " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q" << GetQueueString() << "]" << endl;
 
         Command c(endTime, 3, this->runningProcess);
         addCommand(c, endTime);
@@ -59,7 +58,7 @@ void SRT::FinishCpu(Process& process) {
     else {
         //last burst
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
-        "terminated [Q" << GetQueueString() << "]" << endl;
+        " terminated [Q" << GetQueueString() << "]" << endl;
     }
     //context switching
     this->runningProcess = nullptr;
@@ -70,14 +69,8 @@ void SRT::FinishCpu(Process& process) {
 
 bool SRT::checkPreempt(Process &process){
     if (this->runningProcess != nullptr){
-        if(this->currentTime == 7683){
-            cout << process.process_name << " " << process.tau << endl;
-            cout << this->runningProcess->process_name << " " << this->currentTime << " " << 
-            this->runningProcess->burst_start_time << " " << this->runningProcess->tau << endl;
-            cout << this->runningProcess->tau - (this->currentTime - this->runningProcess->burst_start_time) << endl;
-            cout << this->runningProcess->burst_time_left << endl;
-        }
-        return process.tau < this->runningProcess->tau - (this->currentTime - this->runningProcess->burst_start_time);
+       
+        return process.tau < this->runningProcess->tau - (this->runningProcess->getCurrentBurst() - this->runningProcess->burst_time_left);
     }
     return false;
 }

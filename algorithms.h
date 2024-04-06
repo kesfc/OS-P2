@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 using namespace std;
 
@@ -59,18 +60,15 @@ public:
     vector<Process> processes;
     vector<Process*> readyQueue;
     
-    Process* runningProcess = NULL;
-    int currentTime = 0;
-    int turnAroundTime_cpu = 0;
-    int turnAroundTime_io = 0;
-    int waitTime_cpu = 0;
-    int waitTime_io = 0;
-    int numOfSwitch_cpu = 0;
-    int numOfSwitch_io = 0;
-    int numOfPreemption_cpu = 0;
-    int numOfPreemption_io = 0;
+    Process* runningProcess = nullptr;
     int t_cs;
-
+    int currentTime = 0;
+    //simout satistics
+    int endTime = 0;
+    int cpuPreemption = 0;
+    int ioPreemption = 0;
+    int cpuSwitchCount = 0;
+    int ioSwitchCount = 0;
     // For SJF and SRT
     int alpha = 0;
     // For algo that contain preemption
@@ -84,6 +82,8 @@ public:
     std::unordered_map<int, vector<Command>> commandBuffer;
 
     bool hasCommand(int time);
+
+    void updateWaitTime();
 
     virtual bool checkPreempt(Process & process);
 
@@ -115,7 +115,7 @@ public:
 
     virtual void LastCpuBurst(Process& process);
 
-    virtual void SwitchingDone();
+    virtual void SwitchingDone(Process& process);
 
     string GetQueueString();
 
@@ -124,6 +124,10 @@ public:
     virtual void newProcessRunCheck() = 0;
 
     void printInfo(std::ofstream& file);
+
+    void RemovingPreemptedProcess(Process& process);
+
+    void addPreemptedProcessToQ(Process& process);
 private:
     void setup();
 };
