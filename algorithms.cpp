@@ -114,7 +114,6 @@ void Algo::processRunningProcess() {
     if (runningProcess != nullptr) {
         runningProcess->burst_time_left--;
         if (runningProcess->burst_time_left == 0) {
-
             Command c(currentTime + 1, 1, runningProcess);
             addCommand(c, currentTime + 1);
         }
@@ -143,14 +142,22 @@ void Algo::StartCpu(Process& process) {
     this->isRemovingProcess = false;
     this->runningProcess = &process;
     this->readyQueue.erase(this->readyQueue.begin());
-    cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
+    
+    if (this->runningProcess->burst_time_left == -1){
+        this->runningProcess->burst_time_left = this->runningProcess->getCurrentBurst();
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
     " started using the CPU for " << this->runningProcess->getCurrentBurst() << "ms burst [Q " << GetQueueString() << "]" << endl;
-    this->runningProcess->burst_time_left = this->runningProcess->getCurrentBurst();
+    } else {
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
+    " started using the CPU for remaining " << this->runningProcess->burst_time_left << "ms of " 
+    << this->runningProcess->getCurrentBurst() << "ms burst [Q " << GetQueueString() << "]" << endl;
+    }
     this->runningProcess->burst_start_time = currentTime;
 }
 
 void Algo::FinishCpu(Process& process) {
     this->runningProcess->burst_remaining--;
+    this->runningProcess->burst_time_left = -1;
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) <<
@@ -185,7 +192,7 @@ void Algo::TauRecalculated(Process& process){
 void Algo::Preemption(Process& process){
     // Theoretically only algo that uses preemption will have the chance to reach this function.
     // putting the current running process to queue, and execute the param process.
-    this->readyQueue.push_back(this->runningProcess);
+    this->addProcessToQ(*this->runningProcess);
 
     this->runningProcess = nullptr;
     this->isRemovingProcess = true;
@@ -195,18 +202,19 @@ void Algo::Preemption(Process& process){
     this->readyQueue.insert(this->readyQueue.begin(), &process);
     Command c2(this->currentTime+this->t_cs, 2, &process);
     this->addCommand(c2, this->currentTime+this->t_cs);
+
+    cout << "process " << process.process_name << " will execute at " << this->currentTime+this->t_cs << endl;
 }
 
 void Algo::FinishIO(Process& process) {
     if(this->contain_preemption && this->checkPreempt(process)){
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " 
-        << this->runningProcess->process_name << "[Q" << this->GetQueueString() << "]" << endl;
+        << this->runningProcess->process_name << " [Q" << this->GetQueueString() << "]" << endl;
         this->Preemption(process);
     } else {
         this->readyQueue.push_back(&process);
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << 
     " completed I/O; added to ready queue [Q" << this->GetQueueString() << "]" << endl;
-        
     }
 }
 
@@ -244,7 +252,7 @@ bool Algo::compareCommand(Command a, Command b) {
 
 void Algo::printInfo(std::ofstream& file) {
     file << "Algorithm "<< name <<endl;
-    file << "-- CPU utilization: "<< 123<< "%" << endl<<
+    file << "-- CPU utilization: "<< 123<< "%" << endl
         << "-- average CPU burst time: "<< 123<< " ms ("<<123 << 123<<" ms/"<< 123<<" ms)";
 
 }

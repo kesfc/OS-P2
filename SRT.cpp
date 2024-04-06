@@ -12,10 +12,17 @@ SRT::SRT(string name, vector<Process> processes, int t_cs, double alpha)
 void SRT::newProcessRunCheck(){
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {
         sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
-            return a->tau < b->tau;
+            if (a->tau < b->tau){
+                return true;
+            } else if (a->tau == b->tau){
+                return a->process_name < b->process_name;
+            } else{
+                return false;
+            }
         });
         this->isLoadingProcess = true;
         Process* p = this->readyQueue.front();
+        cout << p->process_name << " will run on " << this->currentTime + this->t_cs / 2 << endl;
         Command c(this->currentTime + this->t_cs / 2, 2, p);
         addCommand(c, this->currentTime + this->t_cs / 2);
     }
@@ -31,6 +38,7 @@ void SRT::FinishCpu(Process& process) {
     double temp = this->alpha * this->runningProcess->getCurrentBurst() + (1 - this->alpha) * process.tau;
     int Newtau = std::ceil(temp);
     this->runningProcess->burst_remaining--;
+    this->runningProcess->burst_time_left = -1;
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << this->runningProcess->process_name <<
@@ -61,8 +69,27 @@ void SRT::FinishCpu(Process& process) {
 
 bool SRT::checkPreempt(Process &process){
     if (this->runningProcess != nullptr){
-        // return process.tau < this->runningProcess->tau;
-        return process.tau < this->runningProcess->tau - this->currentTime - (this->runningProcess->burst_start_time);
+        if(this->currentTime == 7683){
+            cout << process.process_name << " " << process.tau << endl;
+            cout << this->runningProcess->process_name << " " << this->currentTime << " " << 
+            this->runningProcess->burst_start_time << " " << this->runningProcess->tau << endl;
+            cout << this->runningProcess->tau - (this->currentTime - this->runningProcess->burst_start_time) << endl;
+            cout << this->runningProcess->burst_time_left << endl;
+        }
+        return process.tau < this->runningProcess->tau - (this->currentTime - this->runningProcess->burst_start_time);
     }
     return false;
+}
+
+void SRT::addProcessToQ(Process& process){
+    this->readyQueue.push_back(&process);
+    sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
+        if (a->tau < b->tau){
+            return true;
+        } else if (a->tau == b->tau){
+            return a->process_name < b->process_name;
+        } else{
+            return false;
+        }
+    });
 }
