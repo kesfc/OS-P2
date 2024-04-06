@@ -11,6 +11,7 @@ SRT::SRT(string name, vector<Process> processes, int t_cs, double alpha)
 
 void SRT::newProcessRunCheck(){
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {
+        if (this->currentTime + this->t_cs / 2 == 29977) { cout << this->isLoadingProcess << endl; }
         sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
             if (a->tau < b->tau){
                 return true;
@@ -22,7 +23,7 @@ void SRT::newProcessRunCheck(){
         });
         this->isLoadingProcess = true;
         Process* p = this->readyQueue.front();
-        cout << p->process_name << " will run on " << this->currentTime + this->t_cs / 2 << endl;
+        //cout << p->process_name << " will run on " << this->currentTime + this->t_cs / 2 << endl;
         Command c(this->currentTime + this->t_cs / 2, 2, p);
         addCommand(c, this->currentTime + this->t_cs / 2);
     }

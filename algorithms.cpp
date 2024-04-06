@@ -196,6 +196,8 @@ void Algo::Preemption(Process& process){
 
     this->runningProcess = nullptr;
     this->isRemovingProcess = true;
+    this->isLoadingProcess = true;
+
     Command c(this->currentTime+this->t_cs / 2, 0, this->runningProcess);
     this->addCommand(c, this->currentTime+this->t_cs / 2);
 
@@ -203,7 +205,7 @@ void Algo::Preemption(Process& process){
     Command c2(this->currentTime+this->t_cs, 2, &process);
     this->addCommand(c2, this->currentTime+this->t_cs);
 
-    cout << "process " << process.process_name << " will execute at " << this->currentTime+this->t_cs << endl;
+    //cout << "process " << process.process_name << " will execute at " << this->currentTime+this->t_cs << endl;
 }
 
 void Algo::FinishIO(Process& process) {
