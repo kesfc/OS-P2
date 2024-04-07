@@ -129,7 +129,6 @@ public:
 
     void RemovingPreemptedProcessDone(Process& process);
 
-    void addPreemptedProcessToQ(Process& process);
 private:
     void setup();
 };

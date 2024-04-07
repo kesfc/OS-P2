@@ -163,24 +163,30 @@ int main(int argc, char** argv)
     outFile.open("simout.txt");
 
     FCFS fcfs = FCFS("FCFS", processes, t_cs);
-    //fcfs.Start();
+    fcfs.Start();
+
+    cout << endl;
     
     SJF sjf = SJF("SJF", processes, t_cs, alpha);
-    //sjf.Start();
+    sjf.Start();
+
+    cout << endl;
 
     SRT srt = SRT("SRT", processes, t_cs, alpha);
     srt.Start();
+
+    cout << endl;
 
     RR rr = RR("RR", processes, t_cs, t_slice);
     rr.Start();
 
     fcfs.printInfo(outFile);
     outFile << endl;
-    //sjf.printInfo(outFile);
+    sjf.printInfo(outFile);
     outFile << endl;
     srt.printInfo(outFile);
     outFile << endl;
-    //rr.printInfo(outFile);
+    rr.printInfo(outFile);
     //free memory
     for(int i = 0; i < n; i++){
         processes[i].free_self();

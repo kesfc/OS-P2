@@ -88,7 +88,7 @@ void Algo::Start() {
     }
     this->runningProcess = nullptr;
     //start sim
-    while (!(allProcessCompleted() && !isRemovingProcess) && this->currentTime < 9999999) {
+    while (!(allProcessCompleted() && !isRemovingProcess) && this->currentTime < 999999) {
         //corner case
         newProcessRunCheck();
         while (hasCommand(this->currentTime)) {
@@ -138,10 +138,6 @@ void Algo::addProcessToQ(Process& process) {
     return;
 }
 
-void Algo::addPreemptedProcessToQ(Process& process) {
-    this->readyQueue.insert(this->readyQueue.begin(), &process);
-    return;
-}
 
 void Algo::ProcessArrival(Process& process) {
     this->addProcessToQ(process);
@@ -236,7 +232,7 @@ void Algo::TauRecalculated(Process& process){
 }
 
 void Algo::RemovingPreemptedProcessDone(Process& process) {
-    this->addPreemptedProcessToQ(process);
+    this->addProcessToQ(process);
     Command c1(this->currentTime, 0, &process);
     this->addCommand(c1, this->currentTime);
 }

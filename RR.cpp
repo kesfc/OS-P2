@@ -14,7 +14,7 @@ void RR::newProcessRunCheck(){
         Process* p = this->readyQueue.front();
         Command c(this->currentTime + this->t_cs / 2, 2, p);
         addCommand(c, this->currentTime + this->t_cs / 2);
-    } else if (this->currentTime == this->next_expire_time) {
+    } else if (this->currentTime == this->next_expire_time && this->runningProcess != nullptr && this->runningProcess->burst_time_left > 0) {
         cout << "time " << this->currentTime << "ms: Time slice expired; ";
         if(this->readyQueue.empty()){
             cout << "no preemption because ready queue is empty [Q <empty>]" << endl;
@@ -24,10 +24,21 @@ void RR::newProcessRunCheck(){
             cout << "preempting process "<< this->runningProcessName(*this->runningProcess) << " with "<< this->runningProcess->burst_time_left <<
             "ms remaining [Q" << this->GetQueueString() << "]" << endl;
             
-            this->readyQueue.erase(this->readyQueue.begin());
-            this->readyQueue.push_back(this->runningProcess);
-            Command c(this->currentTime + this->t_cs, 2, p);
-            addCommand(c, this->currentTime + this->t_cs);
+            // Schedule to remove the current running progress
+            // Command c(this->currentTime + this->t_cs, 2, p);
+            // addCommand(c, this->currentTime + this->t_cs);
+
+            // Run the front process in the ready queue
+            if (p->isCpuBound) {
+                this->cpuPreemption++;
+            }
+            else {
+                this->ioPreemption++;
+            }
+            //this->readyQueue.erase(this->readyQueue.begin());
+            Command c0(this->currentTime + this->t_cs / 2, -1, this->runningProcess);
+            this->addCommand(c0, this->currentTime + this->t_cs / 2);
+
             this->runningProcess = nullptr;
             this->isRemovingProcess = true;
         }
