@@ -18,5 +18,5 @@ private:
     float alpha;
 };
 
-bool compareProcess(Process* a, Process* b);
+bool compareProcesses(Process* a, Process* b);
 #endif
