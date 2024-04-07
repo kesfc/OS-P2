@@ -64,12 +64,10 @@ Process process_progress(int is_IO_bound, int process_code){
     string bound = is_IO_bound ? "I/O" : "CPU";
     
     // Carete an Process 
-    cout << process_name << " " << arrival_time << " " << Burst_number << endl;
-    //Process process(process_name, arrival_time, Burst_number, Burst_number);
     Process process = Process(process_name, arrival_time, Burst_number, Burst_number, is_IO_bound, lambda);
     // Header info
    std:: cout << bound << "-bound process " << process_name << ": arrival time " << arrival_time <<
-        "ms; " << Burst_number << " CPU burst" << (Burst_number != 1 ? "s" : "") << ":" << endl;
+        "ms; " << Burst_number << " CPU burst" << (Burst_number != 1 ? "s" : "") << endl;
 
     for(int i = 0; i < Burst_number-1; i++){
         int cpu_burst_time = CPU_burst_time();
@@ -163,17 +161,17 @@ int main(int argc, char** argv)
     outFile.open("simout.txt");
 
     FCFS fcfs = FCFS("FCFS", processes, t_cs);
-    fcfs.Start();
+    //fcfs.Start();
 
     cout << endl;
     
     SJF sjf = SJF("SJF", processes, t_cs, alpha);
-    sjf.Start();
+    //sjf.Start();
 
     cout << endl;
 
     SRT srt = SRT("SRT", processes, t_cs, alpha);
-    srt.Start();
+    //srt.Start();
 
     cout << endl;
 

@@ -20,13 +20,13 @@ void RR::newProcessRunCheck(){
             if (timeCheck())cout << "no preemption because ready queue is empty [Q <empty>]" << endl;
         } else {
             // Perform a preemption.
-            //Process* p = this->readyQueue.front();
+            
             if (timeCheck())cout << "preempting process "<< this->runningProcessName(*this->runningProcess) << " with "<< this->runningProcess->burst_time_left <<
             "ms remaining [Q" << this->GetQueueString() << "]" << endl;
-            
             // Schedule to remove the current running progress
-            // Command c(this->currentTime + this->t_cs, 2, p);
-            // addCommand(c, this->currentTime + this->t_cs);
+            Process* p = this->readyQueue.front();
+            Command c(this->currentTime + this->t_cs, 2, p);
+            addCommand(c, this->currentTime + this->t_cs);
 
             // Run the front process in the ready queue
             if (runningProcess->isCpuBound) {
@@ -41,6 +41,7 @@ void RR::newProcessRunCheck(){
 
             this->runningProcess = nullptr;
             this->isRemovingProcess = true;
+            this->isLoadingProcess = true;
         }
         
         this->next_expire_time = this->runningProcess == nullptr ? 999999 : this->currentTime + this->t_slice;
