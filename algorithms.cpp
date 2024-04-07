@@ -88,7 +88,7 @@ void Algo::Start() {
     }
     this->runningProcess = nullptr;
     //start sim
-    while (!(allProcessCompleted() && !isRemovingProcess) && this->currentTime < 999999) {
+    while (!(allProcessCompleted() && !isRemovingProcess)) {
         //corner case
         newProcessRunCheck();
         while (hasCommand(this->currentTime)) {
@@ -113,7 +113,7 @@ bool Algo::allProcessCompleted() {
         EXIT_FAILURE;
     }
     bool completed = true;
-    for (int i = 0; i < this->processes.size(); i++) {
+    for (vector<Process>::size_type i = 0; i < this->processes.size(); i++) {
         if (!this->processes[i].isCompleted()) {
             completed = false;
             break;
@@ -324,7 +324,7 @@ void Algo::printInfo(std::ofstream& file) {
     float ioWaitTime = 0;
     
 
-    for (int i = 0; i < processes.size(); i++) {
+    for (vector<Process>::size_type i = 0; i < processes.size(); i++) {
         if (processes[i].isCpuBound) {
             cpuBoundedProcessCount++;
             cpuWaitTime += processes[i].waitTime;

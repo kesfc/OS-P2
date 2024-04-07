@@ -84,7 +84,7 @@ Process process_progress(int is_IO_bound, int process_code){
         process.add_burst(cpu_burst_time, io_burst_time);
 
         // Print burst info
-        cout << "--> CPU burst " << cpu_burst_time << "ms --> I/O burst " << io_burst_time << "ms" << endl;
+        // cout << "--> CPU burst " << cpu_burst_time << "ms --> I/O burst " << io_burst_time << "ms" << endl;
     }
 
     // Special for the last CPU burst
@@ -93,7 +93,7 @@ Process process_progress(int is_IO_bound, int process_code){
         final_cpu_burst_time *= 4;
     }
     process.add_burst(final_cpu_burst_time);
-    cout << "--> CPU burst " << final_cpu_burst_time << "ms" << endl;
+    // cout << "--> CPU burst " << final_cpu_burst_time << "ms" << endl;
     return process;
 }
 
