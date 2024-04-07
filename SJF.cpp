@@ -1,6 +1,3 @@
-#include <iostream>
-#include <string>
-#include <vector>
 #include "algorithms.h"
 #include "SJF.h"
 #include "cmath"
@@ -10,81 +7,67 @@ using namespace std;
 SJF::SJF(string name, vector<Process> processes, int t_cs, double alpha)
     : Algo(name, processes, t_cs), alpha(alpha) {}  
 
-void SJF::ProcessArrival(Process& process) {
-    this->readyQueue.push_back(&process);
-    sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
-            return a->tau < b->tau || (a->tau == b->tau && a->process_name < b->process_name);
-        });
-    cout << "time " << this->currentTime << "ms: Process " << process.process_name << " (tau " << process.tau<< "ms) arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
-    //no running process, run
-    if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess) {
+void SJF::newProcessRunCheck(){
+    if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {
+        sort(this->readyQueue.begin(), this->readyQueue.end(), compareProcess);
         this->isLoadingProcess = true;
+        Process* p = this->readyQueue.front();
+        // cout << this->currentTime << " " << p->process_name << " will run on " << this->currentTime + this->t_cs / 2 << endl;
+        Command c(this->currentTime + this->t_cs / 2, 2, p);
+        addCommand(c, this->currentTime + this->t_cs / 2);
 
-        Command c(process.arrival_time + this->t_cs / 2, 2, &process);
-        addCommand(c, process.arrival_time + this->t_cs / 2);
+        // After letting the process start it shoudl be removed from the queue immediately.
+        // cout << "want to remove " << this->readyQueue.front()->process_name << endl;
+        this->readyQueue.erase(this->readyQueue.begin());
     }
 }
 
-void SJF::StartCpu(Process& process) {
-    this->isLoadingProcess = false;
-    this->isRemovingProcess = false;
-    this->runningProcess = &process;
-    this->readyQueue.erase(this->readyQueue.begin());
-    cout << "time " << this->currentTime << "ms: Process " << process.process_name << " (tau " << process.tau<< "ms)" << 
-    " started using the CPU for " << this->runningProcess->getCurrentBurst() << "ms burst [Q" << GetQueueString() << "]" << endl;
-    int endTime = this->currentTime + this->runningProcess->getCurrentBurst();
-    Command c(endTime, 1, &process);
-    addCommand(c, endTime);
+string SJF::runningProcessName(Process & process){
+    string name(1, process.process_name);
+    name = name + " (tau " + to_string(process.tau) + "ms)";
+    return name;
 }
 
 void SJF::FinishCpu(Process& process) {
-    int Newtau = ceil(this->alpha * this->runningProcess->getCurrentBurst() + (1.0 - this->alpha) * process.tau);
+    double temp = this->alpha * this->runningProcess->getCurrentBurst() + (1.0 - this->alpha) * process.tau;
+    int Newtau = std::ceil(temp);
     this->runningProcess->burst_remaining--;
+    this->runningProcess->burst_time_left = -1;
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
-        cout << "time " << this->currentTime << "ms: Process " << process.process_name << " (tau " << process.tau<< "ms)" <<
-        " completed a CPU burst; " << this->runningProcess->burst_remaining << " burst"<< (runningProcess->burst_remaining != 1 ? "s" : "") <<" to go [Q" << GetQueueString() << "]" << endl;
-        int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) <<
+        " completed a CPU burst; " << this->runningProcess->burst_remaining << " burst" << (this->runningProcess->burst_remaining > 1 ? "s" : "")
+        << " to go [Q" << GetQueueString() << "]" << endl;
+
         cout << "time "<< this->currentTime <<"ms: Recalculating tau for process "<< this->runningProcess->process_name << ": old tau "<< 
         this-> runningProcess -> tau<<"ms ==> new tau "<< Newtau<<"ms [Q"<< GetQueueString() << "]"<<endl;
+        this->runningProcess->tau = Newtau;
+
+        int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
         cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
             " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q" << GetQueueString() << "]" << endl;
-        this->runningProcess->tau = Newtau;
+
         Command c(endTime, 3, this->runningProcess);
         addCommand(c, endTime);
-        //context switching
-        this->runningProcess = nullptr;
-        this->isRemovingProcess = true;
-        Command c2(this->currentTime + this->t_cs / 2, 0, &process);
-        addCommand(c2, this->currentTime + this->t_cs / 2);
     }
     else {
         //last burst
-        cout << "time " << this->currentTime << "ms: Process " << process.process_name << " terminated [Q" << GetQueueString() << "]" << endl;
-        this->runningProcess = nullptr;
-        this->isRemovingProcess = true;
-        Command c2(this->currentTime + this->t_cs / 2, 0, &process);
-        addCommand(c2, this->currentTime + this->t_cs / 2);
+        process.terminatedTime = currentTime;
+        cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
+        " terminated [Q" << GetQueueString() << "]" << endl;
     }
+    //context switching
+    this->runningProcess = nullptr;
+    this->isRemovingProcess = true;
+    Command c2(this->currentTime + this->t_cs / 2, 0, &process);
+    addCommand(c2, this->currentTime + this->t_cs / 2);
 }
-void SJF::FinishIO(Process& process) {
+
+void SJF::addProcessToQ(Process& process){
     this->readyQueue.push_back(&process);
-    sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
-            return a->tau < b->tau || (a->tau == b->tau && a->process_name < b->process_name);
-        });
-    cout << "time " << this->currentTime << "ms: Process " << process.process_name << " (tau " << process.tau<< "ms)" << " completed I/O; added to ready queue [Q" << GetQueueString() << "]" << endl;
+    sort(this->readyQueue.begin(), this->readyQueue.end(), compareProcess);
 }
 
-void SJF::newProcessRunCheck() {
-    if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess && !this->readyQueue.empty()) {
-        sort(this->readyQueue.begin(), this->readyQueue.end(), [](Process* a, Process* b) {
-            return a->tau < b->tau || (a->tau == b->tau && a->process_name < b->process_name);
-        });
-        this->isLoadingProcess = true;
-        Process* p = this->readyQueue.front();
-        Command c(this->currentTime + this->t_cs / 2, 2, p);
-        addCommand(c, this->currentTime + this->t_cs / 2);
-    }
+bool compareProcess(Process* a, Process* b){
+    return a->tau < b->tau || (a->tau == b->tau && a->process_name < b->process_name);
 }
-
-
