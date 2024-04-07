@@ -14,7 +14,7 @@ void SRT::newProcessRunCheck(){
         sort(this->readyQueue.begin(), this->readyQueue.end(), compareProcesses);
         this->isLoadingProcess = true;
         Process* p = this->readyQueue.front();
-        // cout << this->currentTime << " " << p->process_name << " will run on " << this->currentTime + this->t_cs / 2 << endl;
+        
         Command c(this->currentTime + this->t_cs / 2, 2, p);
         addCommand(c, this->currentTime + this->t_cs / 2);
 

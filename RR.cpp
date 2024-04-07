@@ -25,7 +25,7 @@ void RR::newProcessRunCheck(){
             "ms remaining [Q" << this->GetQueueString() << "]" << endl;
             // Schedule to remove the current running progress
             Process* p = this->readyQueue.front();
-            Command c(this->currentTime + this->t_cs/2, -2, p);
+            Command c(this->currentTime + this->t_cs/2, 5, p);
             addCommand(c, this->currentTime + this->t_cs/2);
 
             // Run the front process in the ready queue

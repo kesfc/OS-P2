@@ -69,8 +69,8 @@ public:
     int ioPreemption = 0;
     int cpuSwitchCount = 0;
     int ioSwitchCount = 0;
-    float cpuTurnAroundTime = 0;
-    float ioTurnAroundTime = 0;
+    double cpuTurnAroundTime = 0;
+    double ioTurnAroundTime = 0;
     // For SJF and SRT
     int alpha = 0;
     // For algo that contain preemption

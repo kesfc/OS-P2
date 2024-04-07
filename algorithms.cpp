@@ -47,7 +47,7 @@ void Algo::executeCommands(int time) {
         //pop first command
         this->commandBuffer[time].erase(this->commandBuffer[time].begin());
         switch (c.type) {
-            case -2:
+            case 5:
                 LoadProcessToRunningSlot(*c.process);
                 break;
             case -1:
@@ -193,7 +193,7 @@ void Algo::StartCpu(Process& process) {
         if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*p) << " will preempt " <<
         this->runningProcess->process_name << " [Q" << this->GetQueueString() << "]" << endl;
         
-        this->readyQueue.erase(this->readyQueue.begin());
+        //this->readyQueue.erase(this->readyQueue.begin());
         this->Preemption(*p);
     }
 }
@@ -245,7 +245,18 @@ void Algo::LoadProcessToRunningSlot(Process& process) {
     //magic
     process.waitTime += t_cs / 2;
     //magic done
-    this->readyQueue.erase(this->readyQueue.begin());
+    isRemovingProcess = false;
+    isLoadingProcess = true;
+    //remove from queue
+    auto it = std::find_if(readyQueue.begin(), readyQueue.end(), [&process](Process* p) {
+        return p == &process; // Compare addresses to find the matching process
+        });
+    if (it != readyQueue.end()) {
+        // This means that it is a preemption case.
+        // cout << "erasing.. " << (*it)->process_name << endl;
+        readyQueue.erase(it); // Remove the process from readyQueue
+    }
+
     Command c1(this->currentTime + t_cs / 2, 2, &process);
     this->addCommand(c1, this->currentTime + t_cs / 2);
 }
@@ -265,15 +276,15 @@ void Algo::Preemption(Process& process){
     else {
         this->ioPreemption++;
     }
-    
-    this->readyQueue.insert(this->readyQueue.begin(), &process);
 
     Command c0(this->currentTime + this->t_cs / 2, -1, this->runningProcess);
     this->addCommand(c0, this->currentTime + this->t_cs / 2);
 
+    Command c1(this->currentTime + this->t_cs / 2, 5, &process);
+    this->addCommand(c1, this->currentTime + this->t_cs / 2);
+
     this->runningProcess = nullptr;
     this->isRemovingProcess = true;
-    // this->isLoadingProcess = true;
 
     // Command c1(this->currentTime+this->t_cs, 2, &process);
     // this->addCommand(c1, this->currentTime+this->t_cs);
@@ -283,9 +294,9 @@ void Algo::FinishIO(Process& process) {
     process.new_arrival_time = currentTime;
 
     if(this->contain_preemption && this->checkPreempt(process)){
-        if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " << this->runningProcess->process_name << " [Q";
+        addProcessToQ(process);
+        if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " << this->runningProcess->process_name << " [Q"<< this->GetQueueString() << "]" << endl;;
         this->Preemption(process);
-        if (timeCheck())cout<< this->GetQueueString() << "]" << endl;
     } else {
         this->addProcessToQ(process);
         if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) <<
@@ -333,12 +344,12 @@ bool Algo::compareCommand(Command a, Command b) {
 void Algo::printInfo(std::ofstream& file) {
     file << "Algorithm " << name << endl;
 
-    float cpuBurstTime_io = 0;
-    float cpuBurstTime_cpu = 0;
-    float cpuBoundedProcessCount = 0;
+    double cpuBurstTime_io = 0;
+    double cpuBurstTime_cpu = 0;
+    double cpuBoundedProcessCount = 0;
     int ioBoundedProcessCount = 0;
     int cpuBoundBurstCount = 0;
-    float ioBoundBurstCount = 0;
+    double ioBoundBurstCount = 0;
     double cpuWaitTime = 0;
     double ioWaitTime = 0;
     
@@ -375,15 +386,15 @@ void Algo::printInfo(std::ofstream& file) {
     //magic done
     cpuTurnAroundTime = cpuWaitTime + t_cs * cpuSwitchCount + cpuBurstTime_cpu;
     ioTurnAroundTime = ioWaitTime + t_cs * ioSwitchCount + cpuBurstTime_io;
-    float avgTurnAroundTime = std::ceil((cpuTurnAroundTime + ioTurnAroundTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0f) / 1000.0f;
+    double avgTurnAroundTime = std::ceil((cpuTurnAroundTime + ioTurnAroundTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0f) / 1000.0f;
     cpuTurnAroundTime = std::ceil(cpuTurnAroundTime / cpuBoundBurstCount * 1000.0f) / 1000.0f;
     ioTurnAroundTime = std::ceil(ioTurnAroundTime / ioBoundBurstCount * 1000.0f) / 1000.0f;
 
-    float avgCpuBurstTime = std::ceil((cpuBurstTime_cpu + cpuBurstTime_io) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0f) / 1000.0f;
+    double avgCpuBurstTime = std::ceil((cpuBurstTime_cpu + cpuBurstTime_io) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0f) / 1000.0f;
     cpuBurstTime_cpu = std::ceil(cpuBurstTime_cpu / (cpuBoundBurstCount) * 1000.0f) / 1000.0f;
     cpuBurstTime_io = std::ceil(cpuBurstTime_io / (ioBoundBurstCount) * 1000.0f) / 1000.0f;
 
-    float avgWaitTime = std::ceil((cpuWaitTime + ioWaitTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0f) / 1000.0f;
+    double avgWaitTime = std::ceil((cpuWaitTime + ioWaitTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0f) / 1000.0f;
     cpuWaitTime = std::ceil(cpuWaitTime / cpuBoundBurstCount * 1000.0f) / 1000.0f;
     ioWaitTime = std::ceil(ioWaitTime / ioBoundBurstCount * 1000.0f) / 1000.0f;
 
