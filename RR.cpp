@@ -25,8 +25,8 @@ void RR::newProcessRunCheck(){
             "ms remaining [Q" << this->GetQueueString() << "]" << endl;
             // Schedule to remove the current running progress
             Process* p = this->readyQueue.front();
-            Command c(this->currentTime + this->t_cs, 2, p);
-            addCommand(c, this->currentTime + this->t_cs);
+            Command c(this->currentTime + this->t_cs/2, -2, p);
+            addCommand(c, this->currentTime + this->t_cs/2);
 
             // Run the front process in the ready queue
             if (runningProcess->isCpuBound) {
@@ -35,7 +35,7 @@ void RR::newProcessRunCheck(){
             else {
                 this->ioPreemption++;
             }
-            //this->readyQueue.erase(this->readyQueue.begin());
+            //
             Command c0(this->currentTime + this->t_cs / 2, -1, this->runningProcess);
             this->addCommand(c0, this->currentTime + this->t_cs / 2);
 

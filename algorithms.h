@@ -131,6 +131,8 @@ public:
 
     void RemovingPreemptedProcessDone(Process& process);
 
+    void LoadProcessToRunningSlot(Process& process);
+
 private:
     void setup();
 };

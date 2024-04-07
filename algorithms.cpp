@@ -47,6 +47,9 @@ void Algo::executeCommands(int time) {
         //pop first command
         this->commandBuffer[time].erase(this->commandBuffer[time].begin());
         switch (c.type) {
+            case -2:
+                LoadProcessToRunningSlot(*c.process);
+                break;
             case -1:
                 RemovingPreemptedProcessDone(*c.process);
             case 0:
@@ -235,7 +238,16 @@ void Algo::FinishCpu(Process& process) {
 }
 
 void Algo::TauRecalculated(Process& process){
+    
+}
 
+void Algo::LoadProcessToRunningSlot(Process& process) {
+    //magic
+    process.waitTime += t_cs / 2;
+    //magic done
+    this->readyQueue.erase(this->readyQueue.begin());
+    Command c1(this->currentTime + t_cs / 2, 2, &process);
+    this->addCommand(c1, this->currentTime + t_cs / 2);
 }
 
 void Algo::RemovingPreemptedProcessDone(Process& process) {
@@ -324,11 +336,11 @@ void Algo::printInfo(std::ofstream& file) {
     float cpuBurstTime_io = 0;
     float cpuBurstTime_cpu = 0;
     float cpuBoundedProcessCount = 0;
-    float ioBoundedProcessCount = 0;
-    float cpuBoundBurstCount = 0;
+    int ioBoundedProcessCount = 0;
+    int cpuBoundBurstCount = 0;
     float ioBoundBurstCount = 0;
-    float cpuWaitTime = 0;
-    float ioWaitTime = 0;
+    double cpuWaitTime = 0;
+    double ioWaitTime = 0;
     
 
     for (vector<Process>::size_type i = 0; i < processes.size(); i++) {
@@ -355,22 +367,25 @@ void Algo::printInfo(std::ofstream& file) {
 
     float cpuUtilization = std::ceil((cpuBurstTime_cpu + cpuBurstTime_io) / this->endTime * 1000 * 100) / 1000.0f;
     //magic offset:
-    cpuWaitTime -= t_cs * cpuSwitchCount / 2;
-    ioWaitTime -= t_cs * ioSwitchCount / 2;
-
+  /*  if (this->name != "RR") {
+    }*/
+        cpuWaitTime -= (double)t_cs / 2 * cpuSwitchCount;
+        ioWaitTime -= (double)t_cs / 2 * ioSwitchCount;
+    
+    //magic done
     cpuTurnAroundTime = cpuWaitTime + t_cs * cpuSwitchCount + cpuBurstTime_cpu;
     ioTurnAroundTime = ioWaitTime + t_cs * ioSwitchCount + cpuBurstTime_io;
-    float avgTurnAroundTime = std::ceil((cpuTurnAroundTime + ioTurnAroundTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0) / 1000.0f;
-    cpuTurnAroundTime = std::ceil(cpuTurnAroundTime / cpuBoundBurstCount * 1000.0) / 1000.0f;
-    ioTurnAroundTime = std::ceil(ioTurnAroundTime / ioBoundBurstCount * 1000.0) / 1000.0f;
+    float avgTurnAroundTime = std::ceil((cpuTurnAroundTime + ioTurnAroundTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0f) / 1000.0f;
+    cpuTurnAroundTime = std::ceil(cpuTurnAroundTime / cpuBoundBurstCount * 1000.0f) / 1000.0f;
+    ioTurnAroundTime = std::ceil(ioTurnAroundTime / ioBoundBurstCount * 1000.0f) / 1000.0f;
 
-    float avgCpuBurstTime = std::ceil((cpuBurstTime_cpu + cpuBurstTime_io) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0) / 1000.0f;
-    cpuBurstTime_cpu = std::ceil(cpuBurstTime_cpu / (cpuBoundBurstCount) * 1000.0) / 1000.0f;
-    cpuBurstTime_io = std::ceil(cpuBurstTime_io / (ioBoundBurstCount) * 1000.0) / 1000.0f;
+    float avgCpuBurstTime = std::ceil((cpuBurstTime_cpu + cpuBurstTime_io) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0f) / 1000.0f;
+    cpuBurstTime_cpu = std::ceil(cpuBurstTime_cpu / (cpuBoundBurstCount) * 1000.0f) / 1000.0f;
+    cpuBurstTime_io = std::ceil(cpuBurstTime_io / (ioBoundBurstCount) * 1000.0f) / 1000.0f;
 
-    float avgWaitTime = std::ceil((cpuWaitTime + ioWaitTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0) / 1000.0f;
-    cpuWaitTime = std::ceil(cpuWaitTime / cpuBoundBurstCount * 1000.0) / 1000.0f;
-    ioWaitTime = std::ceil(ioWaitTime / ioBoundBurstCount * 1000.0) / 1000.0f;
+    float avgWaitTime = std::ceil((cpuWaitTime + ioWaitTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0f) / 1000.0f;
+    cpuWaitTime = std::ceil(cpuWaitTime / cpuBoundBurstCount * 1000.0f) / 1000.0f;
+    ioWaitTime = std::ceil(ioWaitTime / ioBoundBurstCount * 1000.0f) / 1000.0f;
 
     file << std::fixed << std::setprecision(3);
     file << "-- CPU utilization: " << cpuUtilization << "%" << endl

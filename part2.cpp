@@ -155,23 +155,24 @@ int main(int argc, char** argv)
     //outputFile.open("simout.txt");
     //print part 2 start info
     std::cout << std::fixed << std::setprecision(2);
+    std::cout << endl;
     std::cout << "<<< PROJECT PART II -- t_cs=" << t_cs << "ms; alpha=" << alpha << "; t_slice=" << t_slice << "ms >>>" << endl;
 
     std::ofstream outFile;
     outFile.open("simout.txt");
 
     FCFS fcfs = FCFS("FCFS", processes, t_cs);
-    //fcfs.Start();
+    fcfs.Start();
 
     cout << endl;
     
     SJF sjf = SJF("SJF", processes, t_cs, alpha);
-    //sjf.Start();
+    sjf.Start();
 
     cout << endl;
 
     SRT srt = SRT("SRT", processes, t_cs, alpha);
-    //srt.Start();
+    srt.Start();
 
     cout << endl;
 
