@@ -10,6 +10,13 @@
 #include <cmath> 
 using namespace std;
 
+bool Algo::timeCheck() {
+    if (this->currentTime <= 9999)
+        return true;
+    else
+        return false;
+}
+
 bool Algo::hasCommand(int time) {
     if (this->commandBuffer[time].empty()) {
         return false;
@@ -142,7 +149,7 @@ void Algo::addProcessToQ(Process& process) {
 void Algo::ProcessArrival(Process& process) {
     this->addProcessToQ(process);
 
-    cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
+    if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " arrived; added to ready queue [Q" << GetQueueString() << "]" << endl;
     //no running process, run
     if (this->runningProcess == nullptr && !this->isLoadingProcess && !this->isRemovingProcess) {
         this->isLoadingProcess = true;
@@ -168,10 +175,10 @@ void Algo::StartCpu(Process& process) {
     
     if (this->runningProcess->burst_time_left == -1 || this->runningProcess->burst_time_left == this->runningProcess->getCurrentBurst()){
         this->runningProcess->burst_time_left = this->runningProcess->getCurrentBurst();
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
+        if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) <<
     " started using the CPU for " << this->runningProcess->getCurrentBurst() << "ms burst [Q" << GetQueueString() << "]" << endl;
     } else {
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
+        if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) <<
     " started using the CPU for remaining " << this->runningProcess->burst_time_left << "ms of " 
     << this->runningProcess->getCurrentBurst() << "ms burst [Q" << GetQueueString() << "]" << endl;
     }
@@ -180,7 +187,7 @@ void Algo::StartCpu(Process& process) {
     if (this->contain_preemption && this->checkPreempt(*this->readyQueue.front())){
         Process* p = this->readyQueue.front();
 
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*p) << " will preempt " << 
+        if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*p) << " will preempt " <<
         this->runningProcess->process_name << " [Q" << this->GetQueueString() << "]" << endl;
         
         this->readyQueue.erase(this->readyQueue.begin());
@@ -200,11 +207,11 @@ void Algo::FinishCpu(Process& process) {
     this->runningProcess->burst_time_left = -1;
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) <<
+        if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) <<
         " completed a CPU burst; " << this->runningProcess->burst_remaining << " burst" << 
         (this->runningProcess->burst_remaining > 1 ? "s" : "") <<" to go [Q" << GetQueueString() << "]" << endl;
         int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) << 
+        if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(*this->runningProcess) <<
             " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q" << GetQueueString() << "]" << endl;
         Command c(endTime, 3, this->runningProcess);
         addCommand(c, endTime);
@@ -240,7 +247,7 @@ void Algo::RemovingPreemptedProcessDone(Process& process) {
 void Algo::Preemption(Process& process){
     // Theoretically only algo that uses preemption will have the chance to reach this function.
     // putting the current running process to queue, and execute the param process.
-    if (process.isCpuBound) {
+    if (runningProcess->isCpuBound) {
         this->cpuPreemption++;
     }
     else {
@@ -264,12 +271,12 @@ void Algo::FinishIO(Process& process) {
     process.new_arrival_time = currentTime;
 
     if(this->contain_preemption && this->checkPreempt(process)){
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " << this->runningProcess->process_name << " [Q";
+        if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << " completed I/O; preempting " << this->runningProcess->process_name << " [Q";
         this->Preemption(process);
-        cout<< this->GetQueueString() << "]" << endl;
+        if (timeCheck())cout<< this->GetQueueString() << "]" << endl;
     } else {
         this->addProcessToQ(process);
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) << 
+        if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) <<
     " completed I/O; added to ready queue [Q" << this->GetQueueString() << "]" << endl;
     }
 }
@@ -347,19 +354,23 @@ void Algo::printInfo(std::ofstream& file) {
     }
 
     float cpuUtilization = std::ceil((cpuBurstTime_cpu + cpuBurstTime_io) / this->endTime * 1000 * 100) / 1000.0f;
+    //magic offset:
+    cpuWaitTime -= t_cs * cpuSwitchCount / 2;
+    ioWaitTime -= t_cs * ioSwitchCount / 2;
+
+    cpuTurnAroundTime = cpuWaitTime + t_cs * cpuSwitchCount + cpuBurstTime_cpu;
+    ioTurnAroundTime = ioWaitTime + t_cs * ioSwitchCount + cpuBurstTime_io;
+    float avgTurnAroundTime = std::ceil((cpuTurnAroundTime + ioTurnAroundTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0) / 1000.0f;
+    cpuTurnAroundTime = std::ceil(cpuTurnAroundTime / cpuBoundBurstCount * 1000.0) / 1000.0f;
+    ioTurnAroundTime = std::ceil(ioTurnAroundTime / ioBoundBurstCount * 1000.0) / 1000.0f;
 
     float avgCpuBurstTime = std::ceil((cpuBurstTime_cpu + cpuBurstTime_io) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0) / 1000.0f;
     cpuBurstTime_cpu = std::ceil(cpuBurstTime_cpu / (cpuBoundBurstCount) * 1000.0) / 1000.0f;
     cpuBurstTime_io = std::ceil(cpuBurstTime_io / (ioBoundBurstCount) * 1000.0) / 1000.0f;
 
-
     float avgWaitTime = std::ceil((cpuWaitTime + ioWaitTime) / (cpuBoundBurstCount + ioBoundBurstCount) * 1000.0) / 1000.0f;
-    cpuWaitTime = std::ceil((cpuWaitTime - t_cs / 2) / cpuBoundBurstCount * 1000.0) / 1000.0f;
-    ioWaitTime = std::ceil((ioWaitTime - t_cs/2) / ioBoundBurstCount * 1000.0) / 1000.0f;
-
-    float avgTurnAroundTime = std::ceil((cpuTurnAroundTime + ioTurnAroundTime) / processes.size() * 1000.0) / 1000.0f;
-    cpuTurnAroundTime = std::ceil(cpuTurnAroundTime/ cpuBoundBurstCount * 1000.0) / 1000.0f;
-    ioTurnAroundTime = std::ceil(ioTurnAroundTime/ ioBoundBurstCount * 1000.0) / 1000.0f;
+    cpuWaitTime = std::ceil(cpuWaitTime / cpuBoundBurstCount * 1000.0) / 1000.0f;
+    ioWaitTime = std::ceil(ioWaitTime / ioBoundBurstCount * 1000.0) / 1000.0f;
 
     file << std::fixed << std::setprecision(3);
     file << "-- CPU utilization: " << cpuUtilization << "%" << endl
@@ -369,5 +380,4 @@ void Algo::printInfo(std::ofstream& file) {
     file << std::fixed << std::setprecision(0);
     file << "-- number of context switches: " << (this->cpuSwitchCount + this->ioSwitchCount) << " (" << this->cpuSwitchCount << "/" << this->ioSwitchCount << ")" << endl
         << "-- number of preemptions: " << (this->cpuPreemption + this->ioPreemption) << " (" << this->cpuPreemption << "/" << this->ioPreemption << ")" << endl;
-
 }

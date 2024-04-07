@@ -83,6 +83,8 @@ public:
 
     std::unordered_map<int, vector<Command>> commandBuffer;
 
+    bool timeCheck();
+
     bool hasCommand(int time);
 
     void updateWaitTime();

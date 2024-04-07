@@ -18,9 +18,6 @@ void SRT::newProcessRunCheck(){
         Command c(this->currentTime + this->t_cs / 2, 2, p);
         addCommand(c, this->currentTime + this->t_cs / 2);
 
-        // After letting the process start it shoudl be removed from the queue immediately.
-        // cout << "want to remove " << this->readyQueue.front()->process_name << endl;
-        this->readyQueue.erase(this->readyQueue.begin());
     }
 }
 
@@ -37,16 +34,16 @@ void SRT::FinishCpu(Process& process) {
     this->runningProcess->burst_time_left = -1;
     //if not terminated, start IO
     if (this->runningProcess->burst_remaining > 0) {
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) <<
+        if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcessName(process) <<
         " completed a CPU burst; " << this->runningProcess->burst_remaining << " burst" << (this->runningProcess->burst_remaining > 1 ? "s" : "")
         << " to go [Q" << GetQueueString() << "]" << endl;
 
-        cout << "time "<< this->currentTime <<"ms: Recalculating tau for process "<< this->runningProcess->process_name << ": old tau "<< 
+        if (timeCheck())cout << "time "<< this->currentTime <<"ms: Recalculating tau for process "<< this->runningProcess->process_name << ": old tau "<<
         this-> runningProcess -> tau<<"ms ==> new tau "<< Newtau<<"ms [Q"<< GetQueueString() << "]"<<endl;
         this->runningProcess->tau = Newtau;
 
         int endTime = this->runningProcess->getCurrentIOBurst() + this->currentTime + this->t_cs/2;
-        cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name << 
+        if (timeCheck())cout << "time " << this->currentTime << "ms: Process " << this->runningProcess->process_name <<
             " switching out of CPU; blocking on I/O until time " << endTime << "ms [Q" << GetQueueString() << "]" << endl;
 
         Command c(endTime, 3, this->runningProcess);
