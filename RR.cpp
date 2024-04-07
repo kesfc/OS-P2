@@ -20,7 +20,7 @@ void RR::newProcessRunCheck(){
             if (timeCheck())cout << "no preemption because ready queue is empty [Q <empty>]" << endl;
         } else {
             // Perform a preemption.
-            Process* p = this->readyQueue.front();
+            //Process* p = this->readyQueue.front();
             if (timeCheck())cout << "preempting process "<< this->runningProcessName(*this->runningProcess) << " with "<< this->runningProcess->burst_time_left <<
             "ms remaining [Q" << this->GetQueueString() << "]" << endl;
             
